@@ -163,6 +163,8 @@ if ~isempty(files)  % ig there are any files
     blink_rows = isnan(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')));  % where was no recording?
     eyeTrackdata(blink_rows, strcmp(eyeTrackdata_names, 'PS')) = cfg.eye.blink;
     
+    clear blink_rows
+    
     
     % remove fixations outside screen borders
     % -------------------------------------------------------------------------
