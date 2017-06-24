@@ -33,7 +33,6 @@ cfg.eye.blink                = 0;  % how to mark a blink in the pupil time serie
 cfg.eye.blinkwindow          = 0.1;  % how many seconds before and after blink do we want to remove?
 cfg.eye.std_cutoff           = 3;    % ouliers of how many sd should be rejected?
 cfg.eye.high_pass_filter     = 128;  % pupil highpass filter in seconds
-cfg.eye.smoothing_samples    = cfg.eye.samplingrate .* 2;  % window size for smoothing
 cfg.eye.BorderX              = round(cfg.ptb.ScreenX .* 0.1);  % Screen border for rejection
 cfg.eye.BorderY              = round(cfg.ptb.ScreenY .* 0.1);  % Screen border for rejection
 
@@ -263,12 +262,7 @@ if ~isempty(files)  % ig there are any files
     
     % temporal smoothing
     % -------------------------------------------------------------------------
-    
-    var_kernel_temporal = floor(cfg.eye.smoothing_samples/100);  % width of the smoothing
-    autocorrelation_kernel_temporal = exp(-0.5 .* ((1 : cfg.eye.smoothing_samples) - cfg.eye.smoothing_samples / 2) .^ 2 / var_kernel_temporal);
-    autocorrelation_kernel_temporal = autocorrelation_kernel_temporal / sum(autocorrelation_kernel_temporal);
-    
-    EYEDATA.PsizeZ = conv2(EYEDATA.PsizeZ, autocorrelation_kernel_temporal, 'same');
+    EYEDATA.PsizeZ = smooth_1d_kernel_v01(EYEDATA.PsizeZ, cfg.eye.samplingrate);
     
     
     
