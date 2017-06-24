@@ -185,24 +185,18 @@ if ~isempty(files)  % ig there are any files
     % the screen border (ellipse cut of the pupil).
     
     
-    % exclude samples that are outside std_cutoff
+    % exclude samples that are outside std_cutoff - remove outliers
     % -------------------------------------------------------------------------
-    
-    blink_rows = eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) == cfg.eye.blink;  % don't consider rows we marked as blinks before
-    
-    cutoff_low  = mean(eyeTrackdata(~blink_rows, strcmp(eyeTrackdata_names, 'PS'))) - ...
-        cfg.eye.std_cutoff * std(eyeTrackdata(~blink_rows, strcmp(eyeTrackdata_names, 'PS')));
-    cutoff_high = mean(eyeTrackdata(~blink_rows, strcmp(eyeTrackdata_names, 'PS'))) + ...
-        cfg.eye.std_cutoff * std(eyeTrackdata(~blink_rows, strcmp(eyeTrackdata_names, 'PS')));
-    
-    eyeTrackdata(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) < cutoff_low, strcmp(eyeTrackdata_names, 'PS')) = cfg.eye.blink;  % mark as blink
-    eyeTrackdata(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) > cutoff_high, strcmp(eyeTrackdata_names, 'PS')) = cfg.eye.blink; % mark as blink
+    eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) = ...
+        remove_outliers_v01(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')), ...
+        cfg.eye.std_cutoff, cfg.eye.blink);
     
     
     % how many samples have been rejected?
     % -------------------------------------------------------------------------
     
-    nSamplesRejected = sum(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) == cfg.eye.blink) ./ length(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')));
+    nSamplesRejected = sum(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) == ...
+        cfg.eye.blink) ./ length(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')));
     
     
     % plot time series after artifact removal
@@ -219,14 +213,16 @@ if ~isempty(files)  % ig there are any files
     % plot frequency spectrum
     % -------------------------------------------------------------------------
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 2);
-    frequency_spectrum_plot(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')), cfg.eye.samplingrate_eyelink); % frequency spectrum plot before high pass filter
+    frequency_spectrum_plot(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')), ...
+        cfg.eye.samplingrate_eyelink); % frequency spectrum plot before high pass filter
     title('Before high-pass filter');
     set(gca, 'FontSize', cfg.fig.fsiz);
     
     
     % linear interpolate blinks and bad states +- window
     % -------------------------------------------------------------------------
-    eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) = interpolate_blinks_v01(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')), cfg.eye.blink, cfg.eye.samplingrate, cfg.eye.blinkwindow);
+    eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) = interpolate_blinks_v01(eyeTrackdata(:, ...
+        strcmp(eyeTrackdata_names, 'PS')), cfg.eye.blink, cfg.eye.samplingrate, cfg.eye.blinkwindow);
     
     
     % high-pass filter
