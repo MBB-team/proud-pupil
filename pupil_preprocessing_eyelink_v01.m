@@ -32,7 +32,7 @@ cfg.eye.samplingrate         = 250;   % sampling rate we want to have after pre 
 cfg.eye.blink                = 0;  % how to mark a blink in the pupil time series
 cfg.eye.blinkwindow          = 0.1;  % how many seconds before and after blink do we want to remove?
 cfg.eye.std_cutoff           = 3;    % ouliers of how many sd should be rejected?
-cfg.eye.high_pass_filter     = 128;  % pupil highpass filter in seconds
+cfg.eye.highpass_filter     = 128;  % pupil highpass filter in seconds
 cfg.eye.BorderX              = round(cfg.ptb.ScreenX .* 0.1);  % Screen border for rejection
 cfg.eye.BorderY              = round(cfg.ptb.ScreenY .* 0.1);  % Screen border for rejection
 
@@ -226,13 +226,8 @@ if ~isempty(files)  % ig there are any files
     
     % high-pass filter
     % -------------------------------------------------------------------------
-    % set up parameters for spm filter
-    K.RT     = 1 ./ cfg.eye.samplingrate;
-    K.row    = 1 : length(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS'))); % corresponds to the length of convreg
-    K.HParam = cfg.eye.high_pass_filter;  % cut-off time in seconds
-    nK       = spm_filter(K);  % generate filter parameters
-    
-    eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) = spm_filter(nK, eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')));  % apply filter
+    eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) = highpass_filter_v01(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')),...
+        cfg.eye.samplingrate, cfg.eye.highpass_filter);
     
     
     % downsampling
@@ -244,7 +239,7 @@ if ~isempty(files)  % ig there are any files
     EYEDATA.XP       = decimate(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'XP')), sampling_factor);
     EYEDATA.YP       = decimate(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'YP')), sampling_factor);
     
-    % downsample without low pass filtering, for markers etc.
+    % downsample without low pass filtering, used for markers etc.
     EYEDATA.TIME     = downsample(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'TIME')), sampling_factor);
     EYEDATA.INPUT    = downsample(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'INPUT')), sampling_factor);
     EYEDATA.BUTTON   = downsample(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'BUTTON')), sampling_factor);
