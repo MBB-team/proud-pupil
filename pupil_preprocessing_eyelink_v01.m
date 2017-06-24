@@ -32,7 +32,7 @@ cfg.eye.samplingrate         = 250;   % sampling rate we want to have after pre 
 cfg.eye.blink                = 0;   % how to mark a blink in the pupil time series
 cfg.eye.blinkwindow          = 0.1;  % how many seconds before and after blink do we want to remove?
 cfg.eye.std_cutoff           = 3;    % ouliers of how many sd should be rejected?
-cfg.eye.highpass_filter      = 128;  % pupil highpass filter in seconds
+cfg.eye.highpass_filter      = 256;  % pupil highpass filter in seconds. TODO The smaller the more memory is used. 128s does not work with 8GB of RAM
 cfg.eye.border_size          = 0.1;  % how many percent of screen should be considered as periphical?
 
 % directories
