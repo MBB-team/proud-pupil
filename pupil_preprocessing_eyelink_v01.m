@@ -29,13 +29,11 @@ cfg.eye.samplingrate         = 250;   % sampling rate we want to have after pre 
 
 % preprocessing parameter
 % -------------------------------------------------------------------------
-cfg.eye.blink                = 0;  % how to mark a blink in the pupil time series
+cfg.eye.blink                = 0;   % how to mark a blink in the pupil time series
 cfg.eye.blinkwindow          = 0.1;  % how many seconds before and after blink do we want to remove?
 cfg.eye.std_cutoff           = 3;    % ouliers of how many sd should be rejected?
-cfg.eye.highpass_filter     = 128;  % pupil highpass filter in seconds
-cfg.eye.BorderX              = round(cfg.ptb.ScreenX .* 0.1);  % Screen border for rejection
-cfg.eye.BorderY              = round(cfg.ptb.ScreenY .* 0.1);  % Screen border for rejection
-
+cfg.eye.highpass_filter      = 128;  % pupil highpass filter in seconds
+cfg.eye.border_size          = 0.1;  % how many percent of screen should be considered as periphical?
 
 % directories
 % -------------------------------------------------------------------------
@@ -166,15 +164,12 @@ if ~isempty(files)  % ig there are any files
     eyeTrackdata(blink_rows, strcmp(eyeTrackdata_names, 'PS')) = cfg.eye.blink;
     
     
-    % remove fixations outside screen
+    % remove fixations outside screen borders
     % -------------------------------------------------------------------------
-    border_rows1 = eyeTrackdata(:, strcmp(eyeTrackdata_names, 'XP')) < cfg.eye.BorderX;
-    border_rows2 = eyeTrackdata(:, strcmp(eyeTrackdata_names, 'XP')) > cfg.ptb.ScreenX - cfg.eye.BorderX;
-    
-    border_rows3 = eyeTrackdata(:, strcmp(eyeTrackdata_names, 'YP')) < cfg.eye.BorderY;
-    border_rows4 = eyeTrackdata(:, strcmp(eyeTrackdata_names, 'YP')) > cfg.ptb.ScreenY - cfg.eye.BorderY;
-    
-    eyeTrackdata(border_rows1 | border_rows2 | border_rows3 | border_rows4, strcmp(eyeTrackdata_names, 'PS')) = cfg.eye.blink;
+    eyeTrackdata(:, strcmp(eyeTrackdata_names, 'XP')) = delete_periphical_fixations_v01(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'XP')),...
+        eyeTrackdata(:, strcmp(eyeTrackdata_names, 'XP')), ...
+        eyeTrackdata(:, strcmp(eyeTrackdata_names, 'YP')), ...
+        cfg.ptb.ScreenX, cfg.ptb.ScreenY, cfg.eye.border_size, cfg.eye.blink);
     
     
     % TODO correct for gaze position
@@ -193,7 +188,6 @@ if ~isempty(files)  % ig there are any files
     
     % how many samples have been rejected?
     % -------------------------------------------------------------------------
-    
     nSamplesRejected = sum(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) == ...
         cfg.eye.blink) ./ length(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')));
     
@@ -262,6 +256,8 @@ if ~isempty(files)  % ig there are any files
     
     
     % plot after filter and smoothing
+    % -------------------------------------------------------------------------
+    
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 7 : 9);
     plot(EYEDATA.PsizeZ);
     title('Pupil after high-pass filter and smoothing');
@@ -275,22 +271,29 @@ if ~isempty(files)  % ig there are any files
     
     % save data
     % -------------------------------------------------------------------------
-    EYEDATA = struct2table(EYEDATA); % convert to table, EYEDATA is loaded before
+    
+    % convert to table
+    EYEDATA = struct2table(EYEDATA);
     
     % add subject id
     subject_id      = cell(size(EYEDATA, 1), 1);  % create cell array of subject id
     subject_id(:)   = cellstr(subject);  % fill with subject id
     EYEDATA.subject_id = subject_id; % save to table
     
+    % filename
     savewhere = sprintf('%seyelink_%s_pupil_preprocessed_%s_session_%02i', cfg.dir.pupil, condition, subject, session);  % construct file name
     
+    % save EYEDATA as *.mat file
     save([savewhere '.mat'], 'EYEDATA', 'nSamplesRejected', 'fname');  % save processed pupil
     
+    % save control figure
     export_fig([savewhere '.png'], '-r300', '-nocrop');  % save figure
     close(f);  % close figure
     
+    % give feedback on console
     fprintf('Pupil preprocessing done - %.2f%% of samples rejected.\n', sum(nSamplesRejected) * 100);  % done :)
     
+    % clear big arrays to save memory
     clear EYEDATA eyeTrackdata
     
 else
