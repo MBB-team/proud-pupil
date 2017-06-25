@@ -38,7 +38,7 @@ cfg.eye.border_size          = 0.1;  % how many percent of screen should be cons
 % directories
 % -------------------------------------------------------------------------
 cfg.dir.eye                  = 'outputs/eyelink/';  % where are the original *.asc files stored?
-cfg.dir.pupil                = 'outputs/pupil/';   % where do we want to save the preprocessed pupil?
+cfg.dir.pupil                = 'outputs/pupil/preprocessed/';   % where do we want to save the preprocessed pupil?
 cfg.dir.spm                  = '~/matlab_toolboxes/spm12/';  % whre is the SPM installation? Used for high pass filter
 cfg.dir.export_fig           = 'export_fig/';
 
@@ -80,14 +80,14 @@ if ~isempty(files)  % ig there are any files
         warning('Found eyelink files do not match block numbers.');
     end
     
-    eyeTrackdata = [];  % pre allocate empty. Data will be added later.
+    eyelinkdata = [];  % pre allocate empty. Data will be added later.
     
     for i_f = 1 : size(files, 1)
         
         fname = files(i_f).name;  % file name of eye recordings
         disp(fname);
         
-        asc = readEyelink(fullfile(cfg.dir.eye, fname));  % load file and struct eyeTrackdata
+        asc = readEyelink(fullfile(cfg.dir.eye, fname));  % load file and struct eyelinkdata
         
         if isempty(asc)
             error('Eye Tracking data is empty.');
@@ -110,9 +110,9 @@ if ~isempty(files)  % ig there are any files
         % -------------------------------------------------------------------------
         
         if i_f > 1
-            missing_samples    = asc.Numeric_events(1, 1) - eyeTrackdata(end, 1) - 1;  % how many samples are missing between the begin of the current block and the end of the previous one?
+            missing_samples    = asc.Numeric_events(1, 1) - eyelinkdata(end, 1) - 1;  % how many samples are missing between the begin of the current block and the end of the previous one?
             missing            = nan(missing_samples, size(asc.Numeric_events, 2));  % pre allocate as nan
-            missing(:, 1)      = (eyeTrackdata(end, 1) + 1) :  (asc.Numeric_events(1, 1) - 1);  % add missing time stamps
+            missing(:, 1)      = (eyelinkdata(end, 1) + 1) :  (asc.Numeric_events(1, 1) - 1);  % add missing time stamps
             asc.Numeric_events = [missing; asc.Numeric_events];  % add at begin of new data
         end
         
@@ -132,21 +132,23 @@ if ~isempty(files)  % ig there are any files
         
         % add block to data
         % -------------------------------------------------------------------------
-        eyeTrackdata = [eyeTrackdata; asc.Numeric_events];
+        eyelinkdata = [eyelinkdata; asc.Numeric_events];
         
     end % for loop files
     
     
-    
     % save row names for later
     % -------------------------------------------------------------------------
-    eyeTrackdata_names = asc.Numeric_row_names;
-    eyeTrackdata_names(end +1) = {'SESSION'};
-    eyeTrackdata_names(end +1) = {'BLOCK'};
+    eyelinkdata_names = asc.Numeric_row_names;
+    eyelinkdata_names(end +1) = {'SESSION'};
+    eyelinkdata_names(end +1) = {'BLOCK'};
+    
+    clear asc  % save memory
+    
     
     % plot screen fixations
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 1);
-    plot(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'XP')), -eyeTrackdata(:, strcmp(eyeTrackdata_names, 'YP')), '.');  % plot fixations. Careful, Y axis is inverted in data!
+    plot(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')), -eyelinkdata(:, strcmp(eyelinkdata_names, 'YP')), '.');  % plot fixations. Careful, Y axis is inverted in data!
     title('Screen fixations');
     set(gca, 'FontSize', cfg.fig.fsiz);
     
@@ -157,20 +159,20 @@ if ~isempty(files)  % ig there are any files
     
     % remove bad states
     % -------------------------------------------------------------------------
-    blink_rows = eyeTrackdata(:, strcmp(eyeTrackdata_names, 'BLINK')) == 1;  % where are blinks detected by the eyetracker?
-    eyeTrackdata(blink_rows, strcmp(eyeTrackdata_names, 'PS')) = cfg.eye.blink;
+    blink_rows = eyelinkdata(:, strcmp(eyelinkdata_names, 'BLINK')) == 1;  % where are blinks detected by the eyetracker?
+    eyelinkdata(blink_rows, strcmp(eyelinkdata_names, 'PS')) = cfg.eye.blink;
     
-    blink_rows = isnan(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')));  % where was no recording?
-    eyeTrackdata(blink_rows, strcmp(eyeTrackdata_names, 'PS')) = cfg.eye.blink;
+    blink_rows = isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')));  % where was no recording?
+    eyelinkdata(blink_rows, strcmp(eyelinkdata_names, 'PS')) = cfg.eye.blink;
     
     clear blink_rows
     
     
     % remove fixations outside screen borders
     % -------------------------------------------------------------------------
-    eyeTrackdata(:, strcmp(eyeTrackdata_names, 'XP')) = delete_periphical_fixations_v01(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'XP')),...
-        eyeTrackdata(:, strcmp(eyeTrackdata_names, 'XP')), ...
-        eyeTrackdata(:, strcmp(eyeTrackdata_names, 'YP')), ...
+    eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')) = delete_periphical_fixations_v01(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')),...
+        eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')), ...
+        eyelinkdata(:, strcmp(eyelinkdata_names, 'YP')), ...
         cfg.ptb.ScreenX, cfg.ptb.ScreenY, cfg.eye.border_size, cfg.eye.blink);
     
     
@@ -183,21 +185,21 @@ if ~isempty(files)  % ig there are any files
     
     % exclude samples that are outside std_cutoff - remove outliers
     % -------------------------------------------------------------------------
-    eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) = ...
-        remove_outliers_v01(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')), ...
+    eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = ...
+        remove_outliers_v01(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), ...
         cfg.eye.std_cutoff, cfg.eye.blink);
     
     
     % how many samples have been rejected?
     % -------------------------------------------------------------------------
-    nSamplesRejected = sum(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) == ...
-        cfg.eye.blink) ./ length(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')));
+    nSamplesRejected = sum(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) == ...
+        cfg.eye.blink) ./ length(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')));
     
     
     % plot time series after artifact removal
     % -------------------------------------------------------------------------
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 4 : 6);
-    tmp_plot = eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS'));
+    tmp_plot = eyelinkdata(:, strcmp(eyelinkdata_names, 'PS'));
     tmp_plot(tmp_plot == cfg.eye.blink) = nan;  % for plot replace blinks with nan
     plot(tmp_plot);
     tmp_plot = [];  % delete tmp_plot again
@@ -208,7 +210,7 @@ if ~isempty(files)  % ig there are any files
     % plot frequency spectrum
     % -------------------------------------------------------------------------
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 2);
-    frequency_spectrum_plot(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')), ...
+    frequency_spectrum_plot(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), ...
         cfg.eye.samplingrate_eyelink); % frequency spectrum plot before high pass filter
     title('Before high-pass filter');
     set(gca, 'FontSize', cfg.fig.fsiz);
@@ -216,13 +218,13 @@ if ~isempty(files)  % ig there are any files
     
     % linear interpolate blinks and bad states +- window
     % -------------------------------------------------------------------------
-    eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) = interpolate_blinks_v01(eyeTrackdata(:, ...
-        strcmp(eyeTrackdata_names, 'PS')), cfg.eye.blink, cfg.eye.samplingrate, cfg.eye.blinkwindow);
+    eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = interpolate_blinks_v01(eyelinkdata(:, ...
+        strcmp(eyelinkdata_names, 'PS')), cfg.eye.blink, cfg.eye.samplingrate, cfg.eye.blinkwindow);
     
     
     % high-pass filter
     % -------------------------------------------------------------------------
-    eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')) = highpass_filter_v01(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')),...
+    eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = highpass_filter_v01(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')),...
         cfg.eye.samplingrate, cfg.eye.highpass_filter);
     
     
@@ -231,27 +233,31 @@ if ~isempty(files)  % ig there are any files
     sampling_factor = round(cfg.eye.samplingrate_eyelink ./ cfg.eye.samplingrate);  % by what factor do we need to reduce?
     
     % downsamples with low pass filtering, used for measures
-    EYEDATA.PS       = decimate(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'PS')), sampling_factor);
-    EYEDATA.XP       = decimate(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'XP')), sampling_factor);
-    EYEDATA.YP       = decimate(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'YP')), sampling_factor);
+    EYEDATA.PS       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), sampling_factor);
+    EYEDATA.XP       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')), sampling_factor);
+    EYEDATA.YP       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'YP')), sampling_factor);
     
     % downsample without low pass filtering, used for markers etc.
-    EYEDATA.TIME     = downsample(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'TIME')), sampling_factor);
-    EYEDATA.INPUT    = downsample(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'INPUT')), sampling_factor);
-    EYEDATA.BUTTON   = downsample(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'BUTTON')), sampling_factor);
-    EYEDATA.BLINK    = downsample(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'BLINK')), sampling_factor);
-    EYEDATA.SACCADE  = downsample(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'SACCADE')), sampling_factor);
-    EYEDATA.FIXATION = downsample(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'FIXATION')), sampling_factor);
-    EYEDATA.SESSION  = downsample(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'SESSION')), sampling_factor);
-    EYEDATA.BLOCK    = downsample(eyeTrackdata(:, strcmp(eyeTrackdata_names, 'BLOCK')), sampling_factor);
+    EYEDATA.TIME     = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'TIME')), sampling_factor);
+    EYEDATA.INPUT    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'INPUT')), sampling_factor);
+    EYEDATA.SESSION  = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'SESSION')), sampling_factor);
+    EYEDATA.BLOCK    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BLOCK')), sampling_factor);
     
+    % only include the next variables if you really need them later
+    % EYEDATA.BUTTON   = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BUTTON')), sampling_factor);
+    % EYEDATA.BLINK    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BLINK')), sampling_factor);
+    % EYEDATA.SACCADE  = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'SACCADE')), sampling_factor);
+    % EYEDATA.FIXATION = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'FIXATION')), sampling_factor);
+    
+    % clear big arrays to save memory
+    clear eyelinkdata
     
     % z-score pupil time series
     % -------------------------------------------------------------------------
     EYEDATA.PsizeZ = zscore(EYEDATA.PS);
     
     
-    % temporal smoothing
+    % temporal smoothing pupil
     % -------------------------------------------------------------------------
     EYEDATA.PsizeZ = smooth_1d_kernel_v01(EYEDATA.PsizeZ, cfg.eye.samplingrate);
     
@@ -296,7 +302,7 @@ if ~isempty(files)  % ig there are any files
     fprintf('Pupil preprocessing done - %.2f%% of samples rejected.\n', sum(nSamplesRejected) * 100);  % done :)
     
     % clear big arrays to save memory
-    clear EYEDATA eyeTrackdata
+    clear EYEDATA
     
 else
     disp('No files found.');
