@@ -255,7 +255,7 @@ if ~isempty(files)  % ig there are any files
     % z-score pupil time series
     % -------------------------------------------------------------------------
     EYEDATA.PsizeZ = zscore(EYEDATA.PS);
-    
+    EYEDATA = removefields(EYEDATA, 'PS');
     
     % temporal smoothing pupil
     % -------------------------------------------------------------------------
