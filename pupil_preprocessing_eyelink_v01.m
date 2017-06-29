@@ -34,7 +34,7 @@ cfg.eye.blinkwindow          = 0.1;  % how many seconds before and after blink d
 cfg.eye.std_cutoff           = 3;    % ouliers of how many sd should be rejected?
 cfg.eye.highpass_filter      = 256;  % pupil highpass filter in seconds. TODO The smaller the more memory is used. 128s does not work with 8GB of RAM
 cfg.eye.border_size          = 0.1;  % how many percent of screen should be considered as periphical?
-
+cfg.eye.highpass_filter      = 1;    % Filter everything faster than this in Hz.
 % directories
 % -------------------------------------------------------------------------
 cfg.dir.eye                  = 'outputs/eyelink/';  % where are the original *.asc files stored?
@@ -252,20 +252,19 @@ if ~isempty(files)  % ig there are any files
     % clear big arrays to save memory
     clear eyelinkdata
     
+   
+    % temporal smoothing pupil TODO
+    % -------------------------------------------------------------------------
+    %EYEDATA.PS = smooth_1d_kernel_v01(EYEDATA.PS, cfg.eye.samplingrate);
+    EYEDATA.PS = lowpassfilter_v01(EYEDATA.PS, cfg.eye.samplingrate, cfg.eye.lowpasscutoff);
+    
     % z-score pupil time series
     % -------------------------------------------------------------------------
     EYEDATA.PsizeZ = zscore(EYEDATA.PS);
     EYEDATA = removefields(EYEDATA, 'PS');
     
-    % temporal smoothing pupil
-    % -------------------------------------------------------------------------
-    EYEDATA.PsizeZ = smooth_1d_kernel_v01(EYEDATA.PsizeZ, cfg.eye.samplingrate);
-    
-    
-    
     % plot after filter and smoothing
     % -------------------------------------------------------------------------
-    
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 7 : 9);
     plot(EYEDATA.PsizeZ);
     title('Pupil after high-pass filter and smoothing');
