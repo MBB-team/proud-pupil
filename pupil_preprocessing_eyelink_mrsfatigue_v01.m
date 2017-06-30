@@ -1,5 +1,5 @@
-function [] = pupil_preprocessing_eyelink_v01(subject, condition, session)
-% function [] = pupil_preprocessing_eyelink_v01(subject, condition, session)
+function [] = pupil_preprocessing_eyelink_mrsfatigue_v01(subject, condition, session)
+% function [] = pupil_preprocessing_eyelink_mrsfatigue_v01(subject, condition, session)
 %   Preprocessing of pupil recordings.
 %   cfg: configuration structure
 %   subject: current subject, ID_INITIALS, e.g. 111_aw
@@ -32,9 +32,10 @@ cfg.eye.samplingrate         = 250;   % sampling rate we want to have after pre 
 cfg.eye.blink                = 0;   % how to mark a blink in the pupil time series
 cfg.eye.blinkwindow          = 0.1;  % how many seconds before and after blink do we want to remove?
 cfg.eye.std_cutoff           = 3;    % ouliers of how many sd should be rejected?
-cfg.eye.highpass_filter      = 256;  % pupil highpass filter in seconds. TODO The smaller the more memory is used. 128s does not work with 8GB of RAM
+cfg.eye.highpass_filter      = 1/128;  % pupil highpass filter in Hz.
+cfg.eye.lowpass_filter       = 1;    % Filter everything faster than this Hz.
+
 cfg.eye.border_size          = 0.1;  % how many percent of screen should be considered as periphical?
-cfg.eye.highpass_filter      = 1;    % Filter everything faster than this in Hz.
 % directories
 % -------------------------------------------------------------------------
 cfg.dir.eye                  = 'outputs/eyelink/';  % where are the original *.asc files stored?
@@ -221,11 +222,11 @@ if ~isempty(files)  % ig there are any files
     eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = interpolate_blinks_v01(eyelinkdata(:, ...
         strcmp(eyelinkdata_names, 'PS')), cfg.eye.blink, cfg.eye.samplingrate, cfg.eye.blinkwindow);
     
-    
-    % high-pass filter
+   
+    % band-pass filter to remove slow fluctuations and to smooth
     % -------------------------------------------------------------------------
-    eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = highpass_filter_v01(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')),...
-        cfg.eye.samplingrate, cfg.eye.highpass_filter);
+    eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = bandpass_filter_v01(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')),...
+        cfg.eye.samplingrate, cfg.eye.highpass_filter, cfg.eye.lowpass_filter);
     
     
     % downsampling
@@ -253,10 +254,6 @@ if ~isempty(files)  % ig there are any files
     clear eyelinkdata
     
    
-    % temporal smoothing pupil TODO
-    % -------------------------------------------------------------------------
-    %EYEDATA.PS = smooth_1d_kernel_v01(EYEDATA.PS, cfg.eye.samplingrate);
-    EYEDATA.PS = lowpassfilter_v01(EYEDATA.PS, cfg.eye.samplingrate, cfg.eye.lowpasscutoff);
     
     % z-score pupil time series
     % -------------------------------------------------------------------------
