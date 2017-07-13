@@ -216,8 +216,9 @@ if ~isempty(files)
             indx_end_of_section   = [matching_samples4(changes4); matching_samples4(end)];  % find the end of a matching block, index in EYEDATA space
             
             if (size(indx_begin_of_section, 1) ~= size(indx_end_of_section, 1))
-                error('Choice task markers do not match for %s, %s, session %03i, block %03i.', subject, condition, session, i_b);
+                warning('Choice task markers do not match for %s, %s, session %03i, block %03i.', subject, condition, session, i_b);
             end
+            
             if (size(indx_begin_of_section, 1) == size(indx_end_of_section, 1)) | size(indx_begin_of_section, 1) > 4
                 indx_begin_of_section = indx_begin_of_section(1 : 4);
                 indx_end_of_section = indx_end_of_section(1 : 4);
