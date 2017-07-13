@@ -279,7 +279,7 @@ if ~isempty(files)
     save([savewhere '.mat'], 'EYEDATA');  % save annotated pupil
     
 else
-   Warning('%seyelink_%s_pupil_preprocessed_%s_session_%02i.mat is empty.', cfg.dir.pupil_preprocessed, condition, subject, session);  % construct file name
+   warning('%seyelink_%s_pupil_preprocessed_%s_session_%02i.mat is empty.', cfg.dir.pupil_preprocessed, condition, subject, session);  % construct file name
 end  % if pupil preprocessed is not empty
 
 end
