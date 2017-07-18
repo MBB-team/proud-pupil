@@ -256,7 +256,10 @@ if ~isempty(files)  % ig there are any files
     % replace single nan values in INPUT
     % -------------------------------------------------------------------------
     if any(isnan(EYEDATA.INPUT))
-        EYEDATA.INPUT(find(isnan(EYEDATA.INPUT))) = EYEDATA.INPUT(find(isnan(EYEDATA.INPUT)) - 1);
+        
+        nansamples = find(isnan(EYEDATA.INPUT));
+        nansamples(nansamples == 1) = [];
+        EYEDATA.INPUT(nansamples) = EYEDATA.INPUT(nansamples - 1);
         fprintf('Removed NaN in EYEDATA.INPUT.\n');
     end
     
