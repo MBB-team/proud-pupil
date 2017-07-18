@@ -222,7 +222,7 @@ if ~isempty(files)  % ig there are any files
     eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = interpolate_blinks_v01(eyelinkdata(:, ...
         strcmp(eyelinkdata_names, 'PS')), cfg.eye.blink, cfg.eye.samplingrate, cfg.eye.blinkwindow);
     
-   
+    
     % band-pass filter to remove slow fluctuations and to smooth
     % -------------------------------------------------------------------------
     eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = bandpass_filter_v01(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')),...
@@ -253,7 +253,13 @@ if ~isempty(files)  % ig there are any files
     % clear big arrays to save memory
     clear eyelinkdata
     
-   
+    % replace single nan values in INPUT
+    % -------------------------------------------------------------------------
+    if any(isnan(EYEDATA.INPUT))
+        EYEDATA.INPUT(find(isnan(EYEDATA.INPUT))) = EYEDATA.INPUT(find(isnan(EYEDATA.INPUT)) - 1);
+        fprintf('Removed NaN in EYEDATA.INPUT.\n');
+    end
+    
     
     % z-score pupil time series
     % -------------------------------------------------------------------------

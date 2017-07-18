@@ -123,8 +123,8 @@ while ~feof(file_ID)
     line_count = line_count + 1;
 end
 frewind(file_ID)
-disp(['Number of lines in the file : ' num2str(line_count)])
-disp(['Time to count the number of lines : ' num2str(toc(start_time_count)) ' s'])
+%disp(['Number of lines in the file : ' num2str(line_count)])
+%disp(['Time to count the number of lines : ' num2str(toc(start_time_count)) ' s'])
 
 
 %% Analyze of 'EVENTS' line and 'SAMPLES' line : Flag factory
@@ -414,7 +414,7 @@ Sample_length = ...
     2 * SAMPLES_VEL_flag * (SAMPLES_LEFT_flag + SAMPLES_RIGHT_flag) + ... % ( XV + YV ) for each eye if VELOCITY
     2 * SAMPLES_VEL_flag + ... % ( XR + YR ) for each eye if RESOLOLUTION
     SAMPLES_INPUT_flag;
-disp(['Sample length is : ' num2str(Sample_length)])
+%disp(['Sample length is : ' num2str(Sample_length)])
 
 
 while ~feof(file_ID)
@@ -427,8 +427,8 @@ while ~feof(file_ID)
     
     % Display each 10k lines a message
     if mod(line_number,10000) == 0
-        disp(line_number)
-        disp(['Time to analyze the last 10k lines : ' num2str(toc(start_time_count)) ' s'])
+        %disp(line_number)
+        %disp(['Time to analyze the last 10k lines : ' num2str(toc(start_time_count)) ' s'])
         start_time_count = tic;
     end
     
@@ -1189,6 +1189,6 @@ end
 
 % Estimation of the output memory size
 output_variables=whos('varargout');
-disp(['Estimated memory size of the output : ' num2str(output_variables.bytes/4/1024/1024) ' Mo'])
+%disp(['Estimated memory size of the output : ' num2str(output_variables.bytes/4/1024/1024) ' Mo'])
 
 end
