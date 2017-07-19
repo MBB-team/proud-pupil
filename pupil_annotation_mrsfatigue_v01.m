@@ -236,31 +236,33 @@ if ~isempty(files)
                 if all(choice_index == 0)  % for missing trials etc. When we dont have choice data for this pupil recording
                     
                     % set variables to {nan}
-                    EYEDATA(eye_index, 'two_dimensions')= {nan};
-                    EYEDATA(eye_index, 'trial_type')    = {nan};
-                    EYEDATA(eye_index, 'empirical_DV')  = {nan};
-                    EYEDATA(eye_index, 'good_delay')    = {nan};
-                    EYEDATA(eye_index, 'rewardSS')      = {nan};
-                    EYEDATA(eye_index, 'costSS')        = {nan};
-                    EYEDATA(eye_index, 'rewardLL')      = {nan};
-                    EYEDATA(eye_index, 'costLL')        = {nan};
-                    EYEDATA(eye_index, 'choiceSS')      = {nan};
-                    EYEDATA(eye_index, 'response_time') = {nan};
+                    EYEDATA(eye_index, 'two_dimensions') = {nan};
+                    EYEDATA(eye_index, 'trial_number')   = {nan};
+                    EYEDATA(eye_index, 'trial_type')     = {nan};
+                    EYEDATA(eye_index, 'empirical_DV')   = {nan};
+                    EYEDATA(eye_index, 'good_delay')     = {nan};
+                    EYEDATA(eye_index, 'rewardSS')       = {nan};
+                    EYEDATA(eye_index, 'costSS')         = {nan};
+                    EYEDATA(eye_index, 'rewardLL')       = {nan};
+                    EYEDATA(eye_index, 'costLL')         = {nan};
+                    EYEDATA(eye_index, 'choiceSS')       = {nan};
+                    EYEDATA(eye_index, 'response_time')  = {nan};
                     
                 else
                     
                     % copy variables
-                    EYEDATA(eye_index, 'task')= {choice_tmp.task(choice_index)};
-                    EYEDATA(eye_index, 'two_dimensions')= {choice_tmp.two_dimensions(choice_index)};
-                    EYEDATA(eye_index, 'trial_type')    = {choice_tmp.trial_type(choice_index)};
-                    EYEDATA(eye_index, 'empirical_DV')  = {choice_tmp.empirical_DV(choice_index)};
-                    EYEDATA(eye_index, 'good_delay')    = {choice_tmp.good_delay(choice_index)};
-                    EYEDATA(eye_index, 'rewardSS')      = {choice_tmp.rewardSS(choice_index)};
-                    EYEDATA(eye_index, 'costSS')        = {choice_tmp.costSS(choice_index)};
-                    EYEDATA(eye_index, 'rewardLL')      = {choice_tmp.rewardLL(choice_index)};
-                    EYEDATA(eye_index, 'costLL')        = {choice_tmp.costLL(choice_index)};
-                    EYEDATA(eye_index, 'choiceSS')      = {choice_tmp.choiceSS(choice_index)};
-                    EYEDATA(eye_index, 'response_time') = {choice_tmp.response_time(choice_index)};
+                    EYEDATA(eye_index, 'task')           = {choice_tmp.task(choice_index)};
+                    EYEDATA(eye_index, 'trial_number')   = {choice_tmp.trial_number(choice_index)};
+                    EYEDATA(eye_index, 'two_dimensions') = {choice_tmp.two_dimensions(choice_index)};
+                    EYEDATA(eye_index, 'trial_type')     = {choice_tmp.trial_type(choice_index)};
+                    EYEDATA(eye_index, 'empirical_DV')   = {choice_tmp.empirical_DV(choice_index)};
+                    EYEDATA(eye_index, 'good_delay')     = {choice_tmp.good_delay(choice_index)};
+                    EYEDATA(eye_index, 'rewardSS')       = {choice_tmp.rewardSS(choice_index)};
+                    EYEDATA(eye_index, 'costSS')         = {choice_tmp.costSS(choice_index)};
+                    EYEDATA(eye_index, 'rewardLL')       = {choice_tmp.rewardLL(choice_index)};
+                    EYEDATA(eye_index, 'costLL')         = {choice_tmp.costLL(choice_index)};
+                    EYEDATA(eye_index, 'choiceSS')       = {choice_tmp.choiceSS(choice_index)};
+                    EYEDATA(eye_index, 'response_time')  = {choice_tmp.response_time(choice_index)};
                     
                 end % choice index not zero
                 
@@ -280,7 +282,7 @@ if ~isempty(files)
     save([savewhere '.mat'], 'EYEDATA');  % save annotated pupil
     
 else
-   warning('%seyelink_%s_pupil_preprocessed_%s_session_%02i.mat is empty.', cfg.dir.pupil_preprocessed, condition, subject, session);  % construct file name
+    warning('%seyelink_%s_pupil_preprocessed_%s_session_%02i.mat is empty.', cfg.dir.pupil_preprocessed, condition, subject, session);  % construct file name
 end  % if pupil preprocessed is not empty
 
 end
