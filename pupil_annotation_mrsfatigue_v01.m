@@ -78,14 +78,15 @@ if ~isempty(files)
     %% fill annotation collumns trialwise
     % =========================================================================
     
-    EYEDATA.trial_type = nan(size(EYEDATA, 1), 1);
-    EYEDATA.good_delay = nan(size(EYEDATA, 1), 1);
-    EYEDATA.rewardSS   = nan(size(EYEDATA, 1), 1);
-    EYEDATA.costSS     = nan(size(EYEDATA, 1), 1);
-    EYEDATA.rewardLL   = nan(size(EYEDATA, 1), 1);
-    EYEDATA.costLL     = nan(size(EYEDATA, 1), 1);
-    EYEDATA.choiceSS   = nan(size(EYEDATA, 1), 1);
-    
+    EYEDATA.trial_type     = nan(size(EYEDATA, 1), 1);
+    EYEDATA.good_delay     = nan(size(EYEDATA, 1), 1);
+    EYEDATA.rewardSS       = nan(size(EYEDATA, 1), 1);
+    EYEDATA.costSS         = nan(size(EYEDATA, 1), 1);
+    EYEDATA.rewardLL       = nan(size(EYEDATA, 1), 1);
+    EYEDATA.costLL         = nan(size(EYEDATA, 1), 1);
+    EYEDATA.choiceSS       = nan(size(EYEDATA, 1), 1);
+    EYEDATA.choice_default = nan(size(EYEDATA, 1), 1);
+
     
     EYEDATA.switches     = nan(size(EYEDATA, 1), 1);
     EYEDATA.performance  = nan(size(EYEDATA, 1), 1);
@@ -246,6 +247,7 @@ if ~isempty(files)
                     EYEDATA(eye_index, 'rewardLL')       = {nan};
                     EYEDATA(eye_index, 'costLL')         = {nan};
                     EYEDATA(eye_index, 'choiceSS')       = {nan};
+                    EYEDATA(eye_index, 'choice_default') = {nan};
                     EYEDATA(eye_index, 'response_time')  = {nan};
                     
                 else
@@ -262,6 +264,7 @@ if ~isempty(files)
                     EYEDATA(eye_index, 'rewardLL')       = {choice_tmp.rewardLL(choice_index)};
                     EYEDATA(eye_index, 'costLL')         = {choice_tmp.costLL(choice_index)};
                     EYEDATA(eye_index, 'choiceSS')       = {choice_tmp.choiceSS(choice_index)};
+                    EYEDATA(eye_index, 'choice_default') = {choice_tmp.choice_default(choice_index)};
                     EYEDATA(eye_index, 'response_time')  = {choice_tmp.response_time(choice_index)};
                     
                 end % choice index not zero
