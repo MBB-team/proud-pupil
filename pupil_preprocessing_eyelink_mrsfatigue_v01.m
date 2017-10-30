@@ -24,14 +24,14 @@ cfg.ptb.ScreenY              = 768; % screen size Y TODO: read from PTB
 % eye tracker
 % -------------------------------------------------------------------------
 cfg.eye.samplingrate_eyelink = 1000;   % sampling rate we want to have after pre processing
-cfg.eye.samplingrate         = 250;   % sampling rate we want to have after pre processing
+cfg.eye.samplingrate         = 60;   % sampling rate we want to have after pre processing
 
 
 % preprocessing parameter
 % -------------------------------------------------------------------------
 cfg.eye.blink                = 0;   % how to mark a blink in the pupil time series
 cfg.eye.blinkwindow          = 0.1;  % how many seconds before and after blink do we want to remove?
-cfg.eye.std_cutoff           = 3;    % ouliers of how many sd should be rejected?
+cfg.eye.mad_cutoff           = 3;    % ouliers of how many mad should be rejected? (median deviance)
 cfg.eye.highpass_filter      = 1/128;  % pupil highpass filter in Hz.
 cfg.eye.lowpass_filter       = 1;    % Filter everything faster than this Hz.
 
@@ -184,11 +184,11 @@ if ~isempty(files)  % ig there are any files
     % the screen border (ellipse cut of the pupil).
     
     
-    % exclude samples that are outside std_cutoff - remove outliers
+    % exclude samples that are outside mad_cutoff - remove outliers
     % -------------------------------------------------------------------------
     eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = ...
-        remove_outliers_v01(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), ...
-        cfg.eye.std_cutoff, cfg.eye.blink);
+        remove_outliers_mad_v01(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), ...
+        cfg.eye.mad_cutoff, cfg.eye.blink);
     
     
     % how many samples have been rejected?
