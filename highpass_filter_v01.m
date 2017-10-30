@@ -4,7 +4,7 @@ function [d] = highpass_filter_v01(d , samplingrate, filter_length)
 % Highpass filter of time series (pupil).
 %
 % d: vector of pupil size measures
-% samplingrate: samplingrate of the eyetracker
+% samplingrate: samplingrate of the eyetracker (in Hz)
 % filter_length: Fluctuations slower than this will be removed (in s).
 %
 % The function depends on spm_filter! You most likely need SPM in your
