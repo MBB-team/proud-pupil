@@ -60,12 +60,16 @@ for i_b = 1 : length(blink_start)  % loop through blinks
     
     n_replace   = stop_repl - start_repl + 1;  % how many samples need to be replaced?
     
+    % if first values = loss of signal/blink, use the average of all the
+    % signal for the interpolation
     if start_repl == 1  % if we want to replace the first value
         start_value = mean(d(d ~= 0));
     else
         start_value = d(start_repl);  % left anchor
     end
     
+    % if last values = loss of signal/blink, use the average of all the
+    % signal for the interpolation
     if stop_repl == length(d) % if we want to replace the last value
         stop_value = mean(d(d ~= 0));
     else
