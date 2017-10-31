@@ -33,9 +33,14 @@ function [d, nanEpisodes] = interpolate_blinks_v03(d , blink, samplingrate, blin
 sampleLength   = 1 ./ samplingrate;  % how long is one sample in seconds?
 blink_samples  = ceil(blinkWindow ./ sampleLength);  % how many samples do we have to remove before and after a blink?
 
-% blink_position = [0; d == blink; 0];  % where is the pupil diameter a
-% blink? (ask Antonius why these zeros are here...)
-blink_position = (d == blink);  % where is the pupil diameter a blink?
+  % where is the pupil diameter a
+% blink? adding one zero at first and one at last so that the diff (for
+% blink_start and blink_stop) may work properly
+if size(d,2) == 1
+    blink_position = [0; d == blink; 0];
+elseif size(d,1) == 1
+    blink_position = [0, d == blink, 0];
+end
 
 blink_start    = find(diff(blink_position) == 1);  % where do the blinks start?
 blink_stop     = find(diff(blink_position) == -1) -1;  % where do blinks end?
