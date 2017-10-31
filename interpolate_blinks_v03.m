@@ -49,7 +49,7 @@ blink_stop     = blink_stop + blink_samples;  % add window at end of blink
 [blink_start, blink_stop] = MergeBrackets(blink_start, blink_stop);  % Merge overlapping blinks (blinks can be overlapping due to the additional window
 
 % store blink info inside nanEpisodes structure
-nanEpisodes.blink_episodes  = blink_position;
+nanEpisodes.blink_episodes  = blink;
 nanEpisodes.blink_start     = blink_start;
 nanEpisodes.blink_stop      = blink_stop;
 
