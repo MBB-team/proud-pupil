@@ -39,7 +39,7 @@ cfg.eye.border_size          = 0.1;  % how many percent of screen should be cons
 
 % directories
 % -------------------------------------------------------------------------
-cfg.dir.eye                  = 'outputs/eye/';  % where are the original *.asc files stored?
+cfg.dir.eye                  = '~/ownCloud/TIMECONTROL/eye/';  % where are the original *.asc files stored?
 cfg.dir.pupil                = 'outputs/pupil/preprocessed/';   % where do we want to save the preprocessed pupil?
 cfg.dir.spm                  = '~/matlab_toolboxes/spm12/';  % whre is the SPM installation? Used for high pass filter
 cfg.dir.export_fig           = 'export_fig/';
@@ -68,89 +68,47 @@ set(f, 'color', 'w', 'toolbar', 'none', 'units', 'centimeters', ...
 % =========================================================================
 
 % load data
-files = dir(sprintf('%seyelink_%s_%s_*sess_%03i*.asc', cfg.dir.eye, condition, subject, session));  % list files in directory
+files = dir(sprintf('%seye*%s*.mat', cfg.dir.eye, subject));  % list files in directory
 
 if ~isempty(files)  % ig there are any files
     
-    % check if the block number is divergent from number in file name
-    last_filename = files(end).name;
-    last_filename = last_filename(1 : end - 8);
-    last_filename = strsplit(last_filename, '_');
-    last_block    = str2double(last_filename{end});
-    
-    if last_block ~= size(files, 1)
-        warning('Found eyelink files do not match block numbers.');
+    %% LOADING DATA
+    % =========================================================================
+    for i_f = 1 : length(files)
+        fprintf('Loading file %s...\n', files(i_f).name);
+        data{i_f} = load(fullfile(cfg.dir.eye, files(i_f).name));
+        fprintf('done.\n');
     end
     
-    eyelinkdata = [];  % pre allocate empty. Data will be added later.
+    if size(data, 2) > 1  % if we have more than one file
+        if data{1}.eyeTrackdata(1).time ~= data{2}.eyeTrackdata(1).time  % if we are not accidentially recorded in one file
+            if data{1}.eyeTrackdata(1).time < data{2}.eyeTrackdata(1).time  % if we started recording with file 1
+                eyeTrackdata = [struct2table(data{1}.eyeTrackdata); struct2table(data{2}.eyeTrackdata)];
+            else  % if we started recording with file 2
+                eyeTrackdata = [struct2table(data{2}.eyeTrackdata); struct2table(data{1}.eyeTrackdata)];
+            end
+        else % if we are accenetially recorded in one file
+            % find longer file and use that one
+            if length(data{2}.eyeTrackdata) > length(data{1}.eyeTrackdata)
+                eyeTrackdata = struct2table(data{2}.eyeTrackdata);
+            else
+                eyeTrackdata = struct2table(data{1}.eyeTrackdata);
+            end
+        end  % if starting time is not the same
+    else  % if we have only one file
+        eyeTrackdata = struct2table(data{1}.eyeTrackdata);
+    end % size
     
-    for i_f = 1 : size(files, 1)
+            clear data
         
-        fname = files(i_f).name;  % file name of eye recordings
-        disp(fname);
-        
-        asc = readEyelink(fullfile(cfg.dir.eye, fname));  % load file and struct eyelinkdata
-        
-        if isempty(asc)
-            error('Eye Tracking data is empty.');
-        end
-        
-        
-        % remove rows when timing is nan
-        % -------------------------------------------------------------------------
-        nanrows = find(isnan(asc.Numeric_events(:, 1)));  % find rows where time stamp is nan
-        
-        if any(diff(nanrows) > 10 & diff(nanrows) < 1000)
-            error('Nan timing during measurement detected.');  % nan timing at begin and end of measurement is normal
-        end
-        
-        asc.Numeric_events(nanrows, :) = [];  % delete nan rows
-        
-        
-        % check distance between blocks from time stamp. Add spacing, so
-        % filters work correctly
-        % -------------------------------------------------------------------------
-        
-        if i_f > 1
-            missing_samples    = asc.Numeric_events(1, 1) - eyelinkdata(end, 1) - 1;  % how many samples are missing between the begin of the current block and the end of the previous one?
-            missing            = nan(missing_samples, size(asc.Numeric_events, 2));  % pre allocate as nan
-            missing(:, 1)      = (eyelinkdata(end, 1) + 1) :  (asc.Numeric_events(1, 1) - 1);  % add missing time stamps
-            asc.Numeric_events = [missing; asc.Numeric_events];  % add at begin of new data
-        end
-        
-        
-        % add session number as collumn
-        % -------------------------------------------------------------------------
-        asc.Numeric_events(:, end + 1) = session;
-        
-        
-        % add block number (from file names) as collumn
-        % -------------------------------------------------------------------------
-        fname = fname(1 : end - 8);
-        fname = strsplit(fname, '_');
-        block = str2double(fname{end});
-        asc.Numeric_events(:, end + 1) = block;
-        
-        
-        % add block to data
-        % -------------------------------------------------------------------------
-        eyelinkdata = [eyelinkdata; asc.Numeric_events];
-        
-    end % for loop files
+  % add subject id
+    subject_id      = cell(size(eyeTrackdata, 1), 1);  % create cell array of subject id
+    subject_id(:)   = cellstr(subject);  % fill with subject id
+    eyeTrackdata.subject_id = subject_id; % save to table
     
-    
-    % save row names for later
-    % -------------------------------------------------------------------------
-    eyelinkdata_names = asc.Numeric_row_names;
-    eyelinkdata_names(end +1) = {'SESSION'};
-    eyelinkdata_names(end +1) = {'BLOCK'};
-    
-    clear asc  % save memory
-    
-    
-    % plot screen fixations
-    subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 1);
-    plot(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')), -eyelinkdata(:, strcmp(eyelinkdata_names, 'YP')), '.');  % plot fixations. Careful, Y axis is inverted in data!
+        % plot screen fixations
+    subplot(ysubplot, xsubplot, 1);
+    plot(eyeTrackdata.LEyeAvgX, -eyeTrackdata.LEyeAvgY, '.');  % plot fixations. Careful, Y axis is inverted in data!
     title('Screen fixations');
     set(gca, 'FontSize', cfg.fig.fsiz);
     
@@ -159,23 +117,25 @@ if ~isempty(files)  % ig there are any files
     %% PREPROCESSING
     % =========================================================================
     
-    % remove bad states
+  
+      % remove bad states
     % -------------------------------------------------------------------------
-    blink_rows = eyelinkdata(:, strcmp(eyelinkdata_names, 'BLINK')) == 1;  % where are blinks detected by the eyetracker?
-    eyelinkdata(blink_rows, strcmp(eyelinkdata_names, 'PS')) = cfg.eye.blink;
+    eyeTrackdata.LEyePsize(eyeTrackdata.state ~= good_state) = blink;
+    eyeTrackdata.REyePsize(eyeTrackdata.state ~= good_state) = blink;
     
-    blink_rows = isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')));  % where was no recording?
-    eyelinkdata(blink_rows, strcmp(eyelinkdata_names, 'PS')) = cfg.eye.blink;
-    
-    clear blink_rows
     
     
     % remove fixations outside screen borders
     % -------------------------------------------------------------------------
-    eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')) = delete_periphical_fixations_v01(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')),...
-        eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')), ...
-        eyelinkdata(:, strcmp(eyelinkdata_names, 'YP')), ...
-        cfg.ptb.ScreenX, cfg.ptb.ScreenY, cfg.eye.border_size, cfg.eye.blink);
+    eyeTrackdata.LEyePsize(eyeTrackdata.LEyeAvgX < cfg.eye.BorderX) = blink;
+    eyeTrackdata.LEyePsize(eyeTrackdata.LEyeAvgY < cfg.eye.BorderY) = blink;
+    eyeTrackdata.LEyePsize(eyeTrackdata.LEyeAvgX > cfg.ptb.ScreenX - cfg.eye.BorderX) = blink;
+    eyeTrackdata.LEyePsize(eyeTrackdata.LEyeAvgY > cfg.ptb.ScreenY - cfg.eye.BorderY) = blink;
+    
+    eyeTrackdata.REyePsize(eyeTrackdata.REyeAvgX < cfg.eye.BorderX) = blink;
+    eyeTrackdata.REyePsize(eyeTrackdata.REyeAvgY < cfg.eye.BorderY) = blink;
+    eyeTrackdata.REyePsize(eyeTrackdata.REyeAvgX > cfg.ptb.ScreenX - cfg.eye.BorderX) = blink;
+    eyeTrackdata.REyePsize(eyeTrackdata.REyeAvgY > cfg.ptb.ScreenY - cfg.eye.BorderY) = blink;
     
     
     % TODO correct for gaze position
@@ -187,7 +147,7 @@ if ~isempty(files)  % ig there are any files
     
     % exclude samples that are outside mad_cutoff - remove outliers
     % -------------------------------------------------------------------------
-    eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = ...
+    eyeTrackdata.L = ...
         remove_outliers_mad_v01(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), ...
         cfg.eye.mad_cutoff, cfg.eye.blink);
     
