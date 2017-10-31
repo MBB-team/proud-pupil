@@ -1,4 +1,4 @@
-function [d, nanEpisodes] = interpolate_blinks_v03(d , blink, samplingrate, blinkWindow)
+function [d, nanEpisodes] = interpolate_blinks_v03(d, blink, samplingrate, blinkWindow)
 % function [d] = interpolate_blinks_v01(d , blink, samplingrate, blinkWindow)
 %
 % Interpolate blinks in 1D pupil size measures.
