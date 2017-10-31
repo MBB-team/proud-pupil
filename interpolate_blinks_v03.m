@@ -8,8 +8,6 @@ function [d, nanEpisodes] = interpolate_blinks_v03(d , blink, samplingrate, blin
 % blink: how is a blink defined in the data, usually 0
 % samplingrate: samplingrate of the eyetracker
 % blinkWindow: how many seconds should be removed before and after a blink?
-% maxItpEpisode: maximum duration of a loss/blink episode on which you want
-% to make an interpolation (keep NaN values otherwise) (in seconds)
 %
 % OUPUT
 % d: vector of pupil size measures (after interpolation)
