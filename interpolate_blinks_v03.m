@@ -1,4 +1,4 @@
-function [d, nanEpisodes] = interpolate_blinks_v03(d , blink, samplingrate, blinkWindow)
+function [d, nanEpisodes] = interpolate_blinks_v03(d, blink, samplingrate, blinkWindow)
 % function [d] = interpolate_blinks_v01(d , blink, samplingrate, blinkWindow)
 %
 % Interpolate blinks in 1D pupil size measures.
@@ -8,8 +8,6 @@ function [d, nanEpisodes] = interpolate_blinks_v03(d , blink, samplingrate, blin
 % blink: how is a blink defined in the data, usually 0
 % samplingrate: samplingrate of the eyetracker
 % blinkWindow: how many seconds should be removed before and after a blink?
-% maxItpEpisode: maximum duration of a loss/blink episode on which you want
-% to make an interpolation (keep NaN values otherwise) (in seconds)
 %
 % OUPUT
 % d: vector of pupil size measures (after interpolation)
@@ -33,9 +31,14 @@ function [d, nanEpisodes] = interpolate_blinks_v03(d , blink, samplingrate, blin
 sampleLength   = 1 ./ samplingrate;  % how long is one sample in seconds?
 blink_samples  = ceil(blinkWindow ./ sampleLength);  % how many samples do we have to remove before and after a blink?
 
-% blink_position = [0; d == blink; 0];  % where is the pupil diameter a
-% blink? (ask Antonius why these zeros are here...)
-blink_position = (d == blink);  % where is the pupil diameter a blink?
+  % where is the pupil diameter a
+% blink? adding one zero at first and one at last so that the diff (for
+% blink_start and blink_stop) may work properly
+if size(d,2) == 1
+    blink_position = [0; d == blink; 0];
+elseif size(d,1) == 1
+    blink_position = [0, d == blink, 0];
+end
 
 blink_start    = find(diff(blink_position) == 1);  % where do the blinks start?
 blink_stop     = find(diff(blink_position) == -1) -1;  % where do blinks end?
@@ -46,7 +49,7 @@ blink_stop     = blink_stop + blink_samples;  % add window at end of blink
 [blink_start, blink_stop] = MergeBrackets(blink_start, blink_stop);  % Merge overlapping blinks (blinks can be overlapping due to the additional window
 
 % store blink info inside nanEpisodes structure
-nanEpisodes.blink_episodes  = blink_position;
+nanEpisodes.blink_episodes  = blink;
 nanEpisodes.blink_start     = blink_start;
 nanEpisodes.blink_stop      = blink_stop;
 
@@ -60,12 +63,16 @@ for i_b = 1 : length(blink_start)  % loop through blinks
     
     n_replace   = stop_repl - start_repl + 1;  % how many samples need to be replaced?
     
+    % if first values = loss of signal/blink, use the average of all the
+    % signal for the interpolation
     if start_repl == 1  % if we want to replace the first value
         start_value = mean(d(d ~= 0));
     else
         start_value = d(start_repl);  % left anchor
     end
     
+    % if last values = loss of signal/blink, use the average of all the
+    % signal for the interpolation
     if stop_repl == length(d) % if we want to replace the last value
         stop_value = mean(d(d ~= 0));
     else
