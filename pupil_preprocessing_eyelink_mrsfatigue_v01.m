@@ -99,7 +99,7 @@ if ~isempty(files)  % ig there are any files
         % -------------------------------------------------------------------------
         nanrows = find(isnan(asc.Numeric_events(:, 1)));  % find rows where time stamp is nan
         
-        if any(diff(nanrows) > 10 & diff(nanrows) < 1000)
+        if any(diff(nanrows) > 10 & diff(nanrows) < 500) 
             error('Nan timing during measurement detected.');  % nan timing at begin and end of measurement is normal
         end
         
