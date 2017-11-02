@@ -1,4 +1,4 @@
-function [X_eyeCoord, Y_eyeCoord, pupil_diam, z_pupil_diam, nanEpisodes] = preproc_eyeGazePupil(asc, x_screen, y_screen, samplingRate, TTL)
+function [X_eyeCoord, Y_eyeCoord, pupil_diam, z_pupil_diam, nanEpisodes] = preproc_eyeGazePupil(asc, x_screen, y_screen, samplingRate, disp_gr)
 %preproc_eyeGazePupil function to make the preprocessing of the eye gaze
 %and pupil data before using analytical scripts to check any correlation
 %with the variables of interest.
@@ -6,7 +6,8 @@ function [X_eyeCoord, Y_eyeCoord, pupil_diam, z_pupil_diam, nanEpisodes] = prepr
 % INPUTS
 % asc: raw eye signal structure containing:
 % asc.button: TTL info
-% asc.dat(1,:): time (in ms)
+% asc.dat(1,:): time (in s) calibrated to the first TTL (or to any other
+% signal signifying the start of your experiment) before using this script
 % asc.dat(2,:): x position of the eye on the screen
 % asc.dat(3,:): y position of the eye on the screen
 % asc.dat(4,:): pupil diameter (in mm)
@@ -17,9 +18,7 @@ function [X_eyeCoord, Y_eyeCoord, pupil_diam, z_pupil_diam, nanEpisodes] = prepr
 %
 % samplingRate: sampling rate of the eye-tracker used in Hz
 %
-% TTL: vector containing TTL timings (or at least T0) in order to calibrate all eye-tracking
-% timings to the first trigger (for fMRI or iEEG experiments in particular)
-% (time in ms)
+% disp_gr: display graph of the signal at each timestep (1) or not (0)?
 %
 % OUTPUTS
 % X_eyeCoord: X position of the eye on the screen
@@ -52,11 +51,9 @@ if bandpass_filter == 1
     fHighPass   = 1/128;         % high-pass filter in Hz (keeps all frequencies above this value)
     fLowPass    = 1;               % low-pass filter in Hz (keeps all frequencies under this value)
 end
-disp_gr = 1; % display graph of the signal at each timestep or not?
 
 %% extract raw signal of eyes
-eyeTime      = asc.dat(1,:); % asc.dat(1,:) = time
-eyeTime_T0   = (eyeTime - TTL(1))/1000; % eye time aligned to first TTL (/1000 to go back to seconds instead of ms)
+eyeTime      = asc.dat(1,:); % asc.dat(1,:) = time (in s) aligned to the first TTL
 X_eyeCoord   = asc.dat(2,:); % asc.dat(2,:) = X coordinate
 Y_eyeCoord   = asc.dat(3,:); % asc.dat(3,:) = Y coordinate
 pupil_diam   = asc.dat(4,:); % asc.dat(4,:) = pupil size
@@ -68,13 +65,13 @@ if disp_gr == 1
     fontSize = 16;
     figure;
     subplot(3, 2, 1);
-    PDcurve = plot(eyeTime_T0, pupil_diam, 'b'); % pupil diameter = f(time)
+    PDcurve = plot(eyeTime, pupil_diam, 'b'); % pupil diameter = f(time)
     hold on;
     scalingFactor = max(pupil_diam)/2;
     blink_episodes = (eyeSignalOk == 0).*scalingFactor; % logical: 1 when blink/signal loss, 0 otherwise
     % blinkCurve = plot(eyeTime_T0, nanEpisodes.blink_episodes.*scalingFactor, 'r'); % blink episodes
-    blinkCurve = plot(eyeTime_T0, blink_episodes, 'r'); % blink episodes
-    xlim([0, max(eyeTime_T0)+50]);
+    blinkCurve = plot(eyeTime, blink_episodes, 'r'); % blink episodes
+    xlim([0, max(eyeTime)+50]);
     legend([PDcurve, blinkCurve], 'pupil diameter','blink episodes');
     legend('boxoff')
     title('Pupil before preprocessing');
@@ -142,13 +139,13 @@ rmpath('C:\Users\nicolas.clairis\Documents\GitHub\proud-pupil'); % remove path c
 if disp_gr == 1
     fontSize = 16;
     subplot(3, 2, 3);
-    PDcurve = plot(eyeTime_T0, pupil_diam, 'b'); % pupil diameter = f(time)
+    PDcurve = plot(eyeTime, pupil_diam, 'b'); % pupil diameter = f(time)
     hold on;
     scalingFactor = max(pupil_diam)/2;
     blink_episodes = (eyeSignalOk == 0).*scalingFactor; % logical: 1 when blink/signal loss, 0 otherwise
     % blinkCurve = plot(eyeTime_T0, nanEpisodes.blink_episodes.*scalingFactor, 'r'); % blink episodes
-    blinkCurve = plot(eyeTime_T0, blink_episodes, 'r'); % blink episodes
-    xlim([0, max(eyeTime_T0)+50]);
+    blinkCurve = plot(eyeTime, blink_episodes, 'r'); % blink episodes
+    xlim([0, max(eyeTime)+50]);
     legend([PDcurve, blinkCurve], 'pupil diameter','blink episodes');
     legend('boxoff')
     title('Pupil after interpolation');
@@ -190,13 +187,13 @@ if bandpass_filter == 1
     if disp_gr == 1
         fontSize = 16;
         subplot(3, 2, 5);
-        PDcurve = plot(eyeTime_T0, pupil_diam, 'b'); % pupil diameter = f(time)
+        PDcurve = plot(eyeTime, pupil_diam, 'b'); % pupil diameter = f(time)
         hold on;
         scalingFactor = max(pupil_diam)/2;
         blink_episodes = (eyeSignalOk == 0).*scalingFactor; % logical: 1 when blink/signal loss, 0 otherwise
         % blinkCurve = plot(eyeTime_T0, nanEpisodes.blink_episodes.*scalingFactor, 'r'); % blink episodes
-        blinkCurve = plot(eyeTime_T0, blink_episodes, 'r'); % blink episodes
-        xlim([0, max(eyeTime_T0)+50]);
+        blinkCurve = plot(eyeTime, blink_episodes, 'r'); % blink episodes
+        xlim([0, max(eyeTime)+50]);
         legend([PDcurve, blinkCurve], 'pupil diameter','blink episodes');
         legend('boxoff')
         title('Pupil after band-pass filter');
@@ -228,13 +225,13 @@ z_pupil_diam = nanzscore(pupil_diam);
 if disp_gr == 1
     figure
     fontSize = 16;
-    PDcurve = plot(eyeTime_T0, z_pupil_diam, 'b'); % pupil diameter = f(time)
+    PDcurve = plot(eyeTime, z_pupil_diam, 'b'); % pupil diameter = f(time)
     hold on;
     scalingFactor = max(z_pupil_diam)/2;
     blink_episodes = (eyeSignalOk == 0).*scalingFactor; % logical: 1 when blink/signal loss, 0 otherwise
     % blinkCurve = plot(eyeTime_T0, nanEpisodes.blink_episodes.*scalingFactor, 'r'); % blink episodes
-    blinkCurve = plot(eyeTime_T0, blink_episodes, 'r'); % blink episodes
-    xlim([0, max(eyeTime_T0)+50]);
+    blinkCurve = plot(eyeTime, blink_episodes, 'r'); % blink episodes
+    xlim([0, max(eyeTime)+50]);
     legend([PDcurve, blinkCurve], 'pupil diameter','blink episodes');
     legend('boxoff')
     title('Pupil after band-pass filter');
