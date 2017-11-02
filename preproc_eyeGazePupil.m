@@ -227,7 +227,7 @@ if disp_gr == 1
     fontSize = 16;
     PDcurve = plot(eyeTime, z_pupil_diam, 'b'); % pupil diameter = f(time)
     hold on;
-    scalingFactor = max(z_pupil_diam)/2;
+    scalingFactor = 1;
     blink_episodes = (eyeSignalOk == 0).*scalingFactor; % logical: 1 when blink/signal loss, 0 otherwise
     % blinkCurve = plot(eyeTime_T0, nanEpisodes.blink_episodes.*scalingFactor, 'r'); % blink episodes
     blinkCurve = plot(eyeTime, blink_episodes, 'r'); % blink episodes
