@@ -86,7 +86,11 @@ if ~isempty(files)
     EYEDATA.costLL         = nan(size(EYEDATA, 1), 1);
     EYEDATA.choiceSS       = nan(size(EYEDATA, 1), 1);
     EYEDATA.choice_default = nan(size(EYEDATA, 1), 1);
+    EYEDATA.two_dimensions = nan(size(EYEDATA, 1), 1);
+    EYEDATA.empirical_DV   = nan(size(EYEDATA, 1), 1);
+    EYEDATA.response_time  = nan(size(EYEDATA, 1), 1);
 
+     
     
     EYEDATA.switches     = nan(size(EYEDATA, 1), 1);
     EYEDATA.performance  = nan(size(EYEDATA, 1), 1);
@@ -139,7 +143,7 @@ if ~isempty(files)
         %% fill annotation collumns trialwise NSWITCH
         % =========================================================================
         
-        if any(EYEDATA(indx, :).INPUT == 45)  % if we have any choice trial on this block
+        if any(EYEDATA(indx, :).INPUT == 45)  % if we have any nswitch trial on this block
             
             matching_samples1 = EYEDATA.INPUT == 42;  % find all matching eye samples
             matching_samples4 = EYEDATA.INPUT == 45;  % find all matching eye samples
@@ -147,10 +151,10 @@ if ~isempty(files)
             matching_samples1 = find(matching_samples1 & indx);  % index vector
             matching_samples4 = find(matching_samples4 & indx);  % index vector
             
-            changes1 = find(diff(matching_samples1) > 10);  % find changes in index vector
-            changes4 = find(diff(matching_samples4) > 10);  % find changes in index vector
+            changes1 = find(diff(matching_samples1) > 10);  % find changes in index vector, aka trial starts
+            changes4 = find(diff(matching_samples4) > 10);  % find changes in index vectorm aka trial ends
             
-            indx_begin_of_section = [matching_samples1(1); matching_samples1(changes1 + 1)];  % find the begin of a matching block, index in EYEDATA space
+            indx_begin_of_section = [matching_samples1(1); matching_samples1(changes1 + 1)];  % find the begin of a matching trial, index in EYEDATA space
             
             % if there is a problem with responses that are too fast and we have
             % not recorded a sample with 52
@@ -165,10 +169,10 @@ if ~isempty(files)
             indx_end_of_section = [matching_samples4(changes4); matching_samples4(end)];  % find the end of a matching block, index in EYEDATA space
             
             if (size(indx_begin_of_section, 1) ~= size(indx_end_of_section, 1)) | size(indx_begin_of_section, 1) ~= 24
-                error('n-switch task markers do not match for %s, %s, session %03i, block %03i.', subject, condition, session, i_b);
+                warning('n-switch task markers do not match for %s, %s, session %03i, block %03i.', subject, condition, session, i_b);
             end
             
-            nswitch_tmp = nswitch_data(nswitch_data.block == blocks(i_b), :);  % only choice data of this block
+            nswitch_tmp = nswitch_data(nswitch_data.block == blocks(i_b), :);  % only data of this block
             
             
             % loop trials
@@ -178,9 +182,9 @@ if ~isempty(files)
                 eye_index = indx_begin_of_section(i_tr) : indx_end_of_section(i_tr);
                 
                 % copy variables
-                EYEDATA(eye_index, 'switches')= {nswitch_data.switches(i_tr)};
-                EYEDATA(eye_index, 'performance')= {nswitch_data.performance(i_tr)};
-                EYEDATA(eye_index, 'trial_number')    = {i_tr};
+                EYEDATA(eye_index, 'switches')     = {nswitch_data.switches(i_tr)};
+                EYEDATA(eye_index, 'performance')  = {nswitch_data.performance(i_tr)};
+                EYEDATA(eye_index, 'trial_number') = {i_tr};
                 
                 
             end % trials
