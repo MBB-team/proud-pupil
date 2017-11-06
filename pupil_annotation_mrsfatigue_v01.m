@@ -89,8 +89,8 @@ if ~isempty(files)
     EYEDATA.two_dimensions = nan(size(EYEDATA, 1), 1);
     EYEDATA.empirical_DV   = nan(size(EYEDATA, 1), 1);
     EYEDATA.response_time  = nan(size(EYEDATA, 1), 1);
-
-     
+    
+    
     
     EYEDATA.switches     = nan(size(EYEDATA, 1), 1);
     EYEDATA.performance  = nan(size(EYEDATA, 1), 1);
@@ -174,20 +174,20 @@ if ~isempty(files)
             
             nswitch_tmp = nswitch_data(nswitch_data.block == blocks(i_b), :);  % only data of this block
             
-            
-            % loop trials
-            for i_tr = 1 : size(indx_begin_of_section, 1)
-                
-                
-                eye_index = indx_begin_of_section(i_tr) : indx_end_of_section(i_tr);
-                
-                % copy variables
-                EYEDATA(eye_index, 'switches')     = {nswitch_data.switches(i_tr)};
-                EYEDATA(eye_index, 'performance')  = {nswitch_data.performance(i_tr)};
-                EYEDATA(eye_index, 'trial_number') = {i_tr};
-                
-                
-            end % trials
+            if size(nswitch_tmp, 1) > 0
+                % loop trials
+                for i_tr = 1 : size(indx_begin_of_section, 1)
+                    
+                    
+                    eye_index = indx_begin_of_section(i_tr) : indx_end_of_section(i_tr);
+                    
+                    % copy variables
+                    EYEDATA(eye_index, 'switches')     = {nswitch_tmp.switches(i_tr)};
+                    EYEDATA(eye_index, 'performance')  = {nswitch_tmp.performance(i_tr)};
+                    EYEDATA(eye_index, 'trial_number') = {i_tr};
+                    
+                end % trials
+            end  % if we have behav data from nswitch
             
         end % inf there is nswitch in this block
         
