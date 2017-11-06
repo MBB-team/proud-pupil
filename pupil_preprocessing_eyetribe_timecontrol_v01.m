@@ -1,5 +1,5 @@
-function [] = pupil_preprocessing_eyetribe_timecontrol_v01(subject, condition, session)
-% function [] = pupil_preprocessing_eyetribe_timecontrol_v01(subject, condition, session)
+function [] = pupil_preprocessing_eyetribe_timecontrol_v01(subject)
+% function [] = pupil_preprocessing_eyetribe_timecontrol_v01(subject)
 %   Preprocessing of pupil recordings.
 %   cfg: configuration structure
 %   subject: current subject, ID_INITIALS, e.g. 111_aw
@@ -28,12 +28,12 @@ cfg.eye.samplingrate         = 60;   % sampling rate we want to have after pre p
 
 % preprocessing parameter
 % -------------------------------------------------------------------------
+cfg.eye.goodstate            = 7;    % good state of eye tracker. / for eye tribe
 cfg.eye.blink                = 0;   % how to mark a blink in the pupil time series
 cfg.eye.blinkwindow          = 0.1;  % how many seconds before and after blink do we want to remove?
 cfg.eye.mad_cutoff           = 3;    % ouliers of how many mad should be rejected? (median deviance)
 cfg.eye.highpass_filter      = 1/128;  % pupil highpass filter in Hz.
 cfg.eye.lowpass_filter       = 1;    % Filter everything faster than this Hz.
-
 cfg.eye.border_size          = 0.1;  % how many percent of screen should be considered as periphical?
 
 
@@ -99,15 +99,15 @@ if ~isempty(files)  % ig there are any files
         eyeTrackdata = struct2table(data{1}.eyeTrackdata);
     end % size
     
-            clear data
-        
-  % add subject id
+    clear data
+    
+    % add subject id
     subject_id      = cell(size(eyeTrackdata, 1), 1);  % create cell array of subject id
     subject_id(:)   = cellstr(subject);  % fill with subject id
     eyeTrackdata.subject_id = subject_id; % save to table
     
-        % plot screen fixations
-    subplot(ysubplot, xsubplot, 1);
+    % plot screen fixations
+    subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 1);
     plot(eyeTrackdata.LEyeAvgX, -eyeTrackdata.LEyeAvgY, '.');  % plot fixations. Careful, Y axis is inverted in data!
     title('Screen fixations');
     set(gca, 'FontSize', cfg.fig.fsiz);
@@ -117,25 +117,26 @@ if ~isempty(files)  % ig there are any files
     %% PREPROCESSING
     % =========================================================================
     
-  
-      % remove bad states
+    
+    % remove bad states -  based on eyetribe state bits (see manual)/
     % -------------------------------------------------------------------------
-    eyeTrackdata.LEyePsize(eyeTrackdata.state ~= good_state) = blink;
-    eyeTrackdata.REyePsize(eyeTrackdata.state ~= good_state) = blink;
+    eyeTrackdata.LEyePsize(eyeTrackdata.state > cfg.eye.goodstate) = cfg.eye.blink;
+    eyeTrackdata.REyePsize(eyeTrackdata.state > cfg.eye.goodstate) = cfg.eye.blink;
     
     
     
     % remove fixations outside screen borders
     % -------------------------------------------------------------------------
-    eyeTrackdata.LEyePsize(eyeTrackdata.LEyeAvgX < cfg.eye.BorderX) = blink;
-    eyeTrackdata.LEyePsize(eyeTrackdata.LEyeAvgY < cfg.eye.BorderY) = blink;
-    eyeTrackdata.LEyePsize(eyeTrackdata.LEyeAvgX > cfg.ptb.ScreenX - cfg.eye.BorderX) = blink;
-    eyeTrackdata.LEyePsize(eyeTrackdata.LEyeAvgY > cfg.ptb.ScreenY - cfg.eye.BorderY) = blink;
     
-    eyeTrackdata.REyePsize(eyeTrackdata.REyeAvgX < cfg.eye.BorderX) = blink;
-    eyeTrackdata.REyePsize(eyeTrackdata.REyeAvgY < cfg.eye.BorderY) = blink;
-    eyeTrackdata.REyePsize(eyeTrackdata.REyeAvgX > cfg.ptb.ScreenX - cfg.eye.BorderX) = blink;
-    eyeTrackdata.REyePsize(eyeTrackdata.REyeAvgY > cfg.ptb.ScreenY - cfg.eye.BorderY) = blink;
+    % TODO delete_periphical_fixations_v01 is commented right now, because
+    % we have a pupil signal, although x and y could be 0 (and would be
+    % filtered otherwise)
+    
+%     eyeTrackdata.LEyePsize = delete_periphical_fixations_v01(eyeTrackdata.LEyePsize, eyeTrackdata.LEyeAvgX, eyeTrackdata.LEyeAvgY, ...
+%         cfg.ptb.ScreenX, cfg.ptb.ScreenY, cfg.eye.border_size, cfg.eye.blink);
+%     
+%     eyeTrackdata.REyePsize = delete_periphical_fixations_v01(eyeTrackdata.REyePsize, eyeTrackdata.REyeAvgX, eyeTrackdata.REyeAvgY, ...
+%         cfg.ptb.ScreenX, cfg.ptb.ScreenY, cfg.eye.border_size, cfg.eye.blink);
     
     
     % TODO correct for gaze position
@@ -147,128 +148,92 @@ if ~isempty(files)  % ig there are any files
     
     % exclude samples that are outside mad_cutoff - remove outliers
     % -------------------------------------------------------------------------
-    eyeTrackdata.L = ...
-        remove_outliers_mad_v01(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), ...
+    eyeTrackdata.LEyePsize = ...
+        remove_outliers_mad_v01(eyeTrackdata.LEyePsize, ...
         cfg.eye.mad_cutoff, cfg.eye.blink);
     
+    eyeTrackdata.REyePsize = ...
+        remove_outliers_mad_v01(eyeTrackdata.REyePsize, ...
+        cfg.eye.mad_cutoff, cfg.eye.blink);
     
     % how many samples have been rejected?
     % -------------------------------------------------------------------------
-    nSamplesRejected = sum(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) == ...
-        cfg.eye.blink) ./ length(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')));
+    nSamplesRejected = (sum(eyeTrackdata.LEyePsize == cfg.eye.blink) + sum(eyeTrackdata.REyePsize == cfg.eye.blink))...
+        ./ (length(eyeTrackdata.LEyePsize) + length(eyeTrackdata.REyePsize));
     
     
     % plot time series after artifact removal
     % -------------------------------------------------------------------------
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 4 : 6);
-    tmp_plot = eyelinkdata(:, strcmp(eyelinkdata_names, 'PS'));
+    tmp_plot = eyeTrackdata.LEyePsize;
     tmp_plot(tmp_plot == cfg.eye.blink) = nan;  % for plot replace blinks with nan
     plot(tmp_plot);
-    tmp_plot = [];  % delete tmp_plot again
-    title('pupil after artifact removal'); % plot before high pass filter
+    tmp_plot = [];
+    title('L pupil after artifact removal'); % plot before high pass filter
     set(gca, 'FontSize', cfg.fig.fsiz);
     
     
     % plot frequency spectrum
     % -------------------------------------------------------------------------
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 2);
-    frequency_spectrum_plot(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), ...
-        cfg.eye.samplingrate_eyelink); % frequency spectrum plot before high pass filter
+    frequency_spectrum_plot(eyeTrackdata.LEyePsize, ...
+        cfg.eye.samplingrate); % frequency spectrum plot before high pass filter
     title('Before high-pass filter');
     set(gca, 'FontSize', cfg.fig.fsiz);
     
     
     % linear interpolate blinks and bad states +- window
     % -------------------------------------------------------------------------
-    eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = interpolate_blinks_v01(eyelinkdata(:, ...
-        strcmp(eyelinkdata_names, 'PS')), cfg.eye.blink, cfg.eye.samplingrate, cfg.eye.blinkwindow);
+    eyeTrackdata.LEyePsize = interpolate_blinks_v01(eyeTrackdata.LEyePsize, cfg.eye.blink, cfg.eye.samplingrate, cfg.eye.blinkwindow);
+    eyeTrackdata.REyePsize = interpolate_blinks_v01(eyeTrackdata.REyePsize, cfg.eye.blink, cfg.eye.samplingrate, cfg.eye.blinkwindow);
     
     
     % band-pass filter to remove slow fluctuations and to smooth
     % -------------------------------------------------------------------------
-    eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = bandpass_filter_v01(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')),...
+    eyeTrackdata.LEyePsize = bandpass_filter_v01(eyeTrackdata.LEyePsize,...
         cfg.eye.samplingrate, cfg.eye.highpass_filter, cfg.eye.lowpass_filter);
     
+    eyeTrackdata.REyePsize = bandpass_filter_v01(eyeTrackdata.REyePsize,...
+        cfg.eye.samplingrate, cfg.eye.highpass_filter, cfg.eye.lowpass_filter);
     
-    % downsampling
+    % average eyes
     % -------------------------------------------------------------------------
-    sampling_factor = round(cfg.eye.samplingrate_eyelink ./ cfg.eye.samplingrate);  % by what factor do we need to reduce?
+    eyeTrackdata.Psize = mean([eyeTrackdata.REyePsize'; eyeTrackdata.LEyePsize'])'; % mean of both eyes
     
-    % downsamples with low pass filtering, used for measures
-    EYEDATA.PS       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), sampling_factor);
-    %EYEDATA.XP       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')), sampling_factor);
-    %EYEDATA.YP       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'YP')), sampling_factor);
-    
-    % downsample without low pass filtering, used for markers etc.
-    EYEDATA.TIME     = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'TIME')), sampling_factor);
-    EYEDATA.INPUT    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'INPUT')), sampling_factor);
-    EYEDATA.SESSION  = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'SESSION')), sampling_factor);
-    EYEDATA.BLOCK    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BLOCK')), sampling_factor);
-    
-    % only include the next variables if you really need them later
-    % EYEDATA.BUTTON   = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BUTTON')), sampling_factor);
-    % EYEDATA.BLINK    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BLINK')), sampling_factor);
-    % EYEDATA.SACCADE  = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'SACCADE')), sampling_factor);
-    % EYEDATA.FIXATION = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'FIXATION')), sampling_factor);
-    
-    % clear big arrays to save memory
-    clear eyelinkdata
-    
-    % replace single nan values in INPUT
+    % z-score
     % -------------------------------------------------------------------------
-    if any(isnan(EYEDATA.INPUT))
-        
-        nansamples = find(isnan(EYEDATA.INPUT));
-        nansamples(nansamples == 1) = [];
-        EYEDATA.INPUT(nansamples) = EYEDATA.INPUT(nansamples - 1);
-        fprintf('Removed NaN in EYEDATA.INPUT.\n');
-    end
+    eyeTrackdata.PsizeZ = zscore(eyeTrackdata.Psize);
     
     
-    % z-score pupil time series
-    % -------------------------------------------------------------------------
-    EYEDATA.PsizeZ = zscore(EYEDATA.PS);
-    EYEDATA = removefields(EYEDATA, 'PS');
     
     % plot after filter and smoothing
     % -------------------------------------------------------------------------
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 7 : 9);
-    plot(EYEDATA.PsizeZ);
+    plot(eyeTrackdata.PsizeZ);
     title('Pupil after high-pass filter and smoothing');
     set(gca, 'FontSize', cfg.fig.fsiz);
     
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 3);
-    frequency_spectrum_plot(EYEDATA.PsizeZ, cfg.eye.samplingrate);
+    frequency_spectrum_plot(eyeTrackdata.PsizeZ, cfg.eye.samplingrate);
     title('After high-pass filter');
     set(gca, 'FontSize', cfg.fig.fsiz);
     
     
     % save data
     % -------------------------------------------------------------------------
+    % save data
+    % -------------------------------------------------------------------------
+    eyeTrackdata = eyeTrackdata(:, {'subject_id', 'time', 'scene', 'mark' 'PsizeZ'});  % select only timing and preprocessed pupil
     
-    % convert to table
-    EYEDATA = struct2table(EYEDATA);
+    savewhere = sprintf('%seye_pupil_preprocessed_%s', cfg.dir.pupil, subject);  % construct file name
     
-    % add subject id
-    subject_id      = cell(size(EYEDATA, 1), 1);  % create cell array of subject id
-    subject_id(:)   = cellstr(subject);  % fill with subject id
-    EYEDATA.subject_id = subject_id; % save to table
+    save([savewhere '.mat'], 'eyeTrackdata', 'nSamplesRejected');  % save processed pupil
     
-    % filename
-    savewhere = sprintf('%seyelink_%s_pupil_preprocessed_%s_session_%02i', cfg.dir.pupil, condition, subject, session);  % construct file name
-    
-    % save EYEDATA as *.mat file
-    save([savewhere '.mat'], 'EYEDATA', 'nSamplesRejected', 'fname');  % save processed pupil
-    
-    % save control figure
     export_fig([savewhere '.png'], '-r300', '-nocrop');  % save figure
     close(f);  % close figure
     
-    % give feedback on console
     fprintf('Pupil preprocessing done - %.2f%% of samples rejected.\n', sum(nSamplesRejected) * 100);  % done :)
     
-    % clear big arrays to save memory
-    clear EYEDATA
     
 else
     disp('No files found.');
