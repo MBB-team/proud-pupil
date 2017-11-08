@@ -84,6 +84,7 @@ if ~isempty(files)
     EYEDATA.costSS         = nan(size(EYEDATA, 1), 1);
     EYEDATA.rewardLL       = nan(size(EYEDATA, 1), 1);
     EYEDATA.costLL         = nan(size(EYEDATA, 1), 1);
+    EYEDATA.costLL_step    = nan(size(EYEDATA, 1), 1);
     EYEDATA.choiceSS       = nan(size(EYEDATA, 1), 1);
     EYEDATA.choice_default = nan(size(EYEDATA, 1), 1);
     EYEDATA.two_dimensions = nan(size(EYEDATA, 1), 1);
@@ -250,6 +251,7 @@ if ~isempty(files)
                     EYEDATA(eye_index, 'costSS')         = {nan};
                     EYEDATA(eye_index, 'rewardLL')       = {nan};
                     EYEDATA(eye_index, 'costLL')         = {nan};
+                    EYEDATA(eye_index, 'costLL_step')    = {nan};
                     EYEDATA(eye_index, 'choiceSS')       = {nan};
                     EYEDATA(eye_index, 'choice_default') = {nan};
                     EYEDATA(eye_index, 'response_time')  = {nan};
@@ -267,6 +269,7 @@ if ~isempty(files)
                     EYEDATA(eye_index, 'costSS')         = {choice_tmp.costSS(choice_index)};
                     EYEDATA(eye_index, 'rewardLL')       = {choice_tmp.rewardLL(choice_index)};
                     EYEDATA(eye_index, 'costLL')         = {choice_tmp.costLL(choice_index)};
+                    EYEDATA(eye_index, 'costLL_step')    = {choice_tmp.costLL(choice_index)};
                     EYEDATA(eye_index, 'choiceSS')       = {choice_tmp.choiceSS(choice_index)};
                     EYEDATA(eye_index, 'choice_default') = {choice_tmp.choice_default(choice_index)};
                     EYEDATA(eye_index, 'response_time')  = {choice_tmp.response_time(choice_index)};
