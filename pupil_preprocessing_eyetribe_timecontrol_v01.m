@@ -132,11 +132,11 @@ if ~isempty(files)  % ig there are any files
     % we have a pupil signal, although x and y could be 0 (and would be
     % filtered otherwise)
     
-%     eyeTrackdata.LEyePsize = delete_periphical_fixations_v01(eyeTrackdata.LEyePsize, eyeTrackdata.LEyeAvgX, eyeTrackdata.LEyeAvgY, ...
-%         cfg.ptb.ScreenX, cfg.ptb.ScreenY, cfg.eye.border_size, cfg.eye.blink);
-%     
-%     eyeTrackdata.REyePsize = delete_periphical_fixations_v01(eyeTrackdata.REyePsize, eyeTrackdata.REyeAvgX, eyeTrackdata.REyeAvgY, ...
-%         cfg.ptb.ScreenX, cfg.ptb.ScreenY, cfg.eye.border_size, cfg.eye.blink);
+    eyeTrackdata.LEyePsize = delete_periphical_fixations_v01(eyeTrackdata.LEyePsize, eyeTrackdata.LEyeAvgX, eyeTrackdata.LEyeAvgY, ...
+        cfg.ptb.ScreenX, cfg.ptb.ScreenY, cfg.eye.border_size, cfg.eye.blink);
+    
+    eyeTrackdata.REyePsize = delete_periphical_fixations_v01(eyeTrackdata.REyePsize, eyeTrackdata.REyeAvgX, eyeTrackdata.REyeAvgY, ...
+        cfg.ptb.ScreenX, cfg.ptb.ScreenY, cfg.eye.border_size, cfg.eye.blink);
     
     
     % TODO correct for gaze position
@@ -173,32 +173,57 @@ if ~isempty(files)  % ig there are any files
     set(gca, 'FontSize', cfg.fig.fsiz);
     
     
+    % determine measured sampling rate
+    % -------------------------------------------------------------------------
+    samplingrate = eyetribe_estimate_samplingrate_v01(eyeTrackdata.time);
+    samplingrate = round(samplingrate);
+    
+    fprintf('The estimated samplingrate is %02.2f Hz.\n', samplingrate);
+    
     % plot frequency spectrum
     % -------------------------------------------------------------------------
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 2);
     frequency_spectrum_plot(eyeTrackdata.LEyePsize, ...
-        cfg.eye.samplingrate); % frequency spectrum plot before high pass filter
+        samplingrate); % frequency spectrum plot before high pass filter
     title('Before high-pass filter');
     set(gca, 'FontSize', cfg.fig.fsiz);
     
     
     % linear interpolate blinks and bad states +- window
     % -------------------------------------------------------------------------
-    eyeTrackdata.LEyePsize = interpolate_blinks_v01(eyeTrackdata.LEyePsize, cfg.eye.blink, cfg.eye.samplingrate, cfg.eye.blinkwindow);
-    eyeTrackdata.REyePsize = interpolate_blinks_v01(eyeTrackdata.REyePsize, cfg.eye.blink, cfg.eye.samplingrate, cfg.eye.blinkwindow);
+    eyeTrackdata.LEyePsize = interpolate_blinks_v01(eyeTrackdata.LEyePsize, cfg.eye.blink, samplingrate, cfg.eye.blinkwindow);
+    eyeTrackdata.REyePsize = interpolate_blinks_v01(eyeTrackdata.REyePsize, cfg.eye.blink, samplingrate, cfg.eye.blinkwindow);
     
     
     % band-pass filter to remove slow fluctuations and to smooth
     % -------------------------------------------------------------------------
     eyeTrackdata.LEyePsize = bandpass_filter_v01(eyeTrackdata.LEyePsize,...
-        cfg.eye.samplingrate, cfg.eye.highpass_filter, cfg.eye.lowpass_filter);
+        samplingrate, cfg.eye.highpass_filter, cfg.eye.lowpass_filter);
     
     eyeTrackdata.REyePsize = bandpass_filter_v01(eyeTrackdata.REyePsize,...
-        cfg.eye.samplingrate, cfg.eye.highpass_filter, cfg.eye.lowpass_filter);
+        samplingrate, cfg.eye.highpass_filter, cfg.eye.lowpass_filter);
+    
+    
+    % interpolate to target sampling rate
+    % -------------------------------------------------------------------------
+    if samplingrate == 30
+        
+        x = 1 : size(eyeTrackdata.time);
+        xq = 1 : 0.5 : size(eyeTrackdata.time) + 1;
+        eyeTrackdata_upsampled = table();
+        eyeTrackdata_upsampled.time = interp1(x, eyeTrackdata.time, xq)';
+        eyeTrackdata_upsampled.REyePsize = interp1(x, eyeTrackdata.REyePsize, xq)';
+        eyeTrackdata_upsampled.LEyePsize = interp1(x, eyeTrackdata.LEyePsize, xq)';
+        eyeTrackdata_upsampled.scene = interp1(x, eyeTrackdata.scene, xq)';
+        eyeTrackdata_upsampled.mark = interp1(x, eyeTrackdata.mark, xq)';
+        
+        eyeTrackdata_upsampled = eyeTrackdata_upsampled(1:end-2, :);  % remove last to samples because they are likely nan
+        eyeTrackdata = eyeTrackdata_upsampled;
+    end  % if measured sampling rate is not the right one
     
     % average eyes
     % -------------------------------------------------------------------------
-    eyeTrackdata.Psize = mean([eyeTrackdata.REyePsize'; eyeTrackdata.LEyePsize'])'; % mean of both eyes
+    eyeTrackdata.Psize = nanmean([eyeTrackdata.REyePsize eyeTrackdata.LEyePsize], 2); % mean of both eyes
     
     % z-score
     % -------------------------------------------------------------------------
@@ -219,10 +244,15 @@ if ~isempty(files)  % ig there are any files
     set(gca, 'FontSize', cfg.fig.fsiz);
     
     
+    
     % save data
     % -------------------------------------------------------------------------
-    % save data
-    % -------------------------------------------------------------------------
+    
+    % add subject id
+    subject_id      = cell(size(eyeTrackdata, 1), 1);  % create cell array of subject id
+    subject_id(:)   = cellstr(subject);  % fill with subject id
+    eyeTrackdata.subject_id = subject_id; % save to table
+    
     eyeTrackdata = eyeTrackdata(:, {'subject_id', 'time', 'scene', 'mark' 'PsizeZ'});  % select only timing and preprocessed pupil
     
     savewhere = sprintf('%seye_pupil_preprocessed_%s', cfg.dir.pupil, subject);  % construct file name
