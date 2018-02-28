@@ -9,11 +9,15 @@ function plot_time_series_with_error(D, color, samplingrate, zero_offset)
 %
 % Author:        Antonius Wiehler <antonius.wiehler@gmail.com>
 % Original:      2017-03-01
-% Last modified: 2017-05-11
+% Last modified: 2018-02-22
 
 if ~exist('zero_offset', 'var')
     zero_offset = 0;  % set pre stimulus interval to 0 if not defined
 end
+
+% remove all nan rows
+nanrows = all(isnan(D), 2);
+D(nanrows, :) = [];
 
 % compute mean and SEM
 if size(D, 1) == 1  % if we have only one time course plot it without mean

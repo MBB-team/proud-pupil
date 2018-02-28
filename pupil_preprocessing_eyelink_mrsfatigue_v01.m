@@ -83,59 +83,63 @@ if ~isempty(files)  % ig there are any files
     
     eyelinkdata = [];  % pre allocate empty. Data will be added later.
     
-    for i_f = 1 : size(files, 1)
+    for i_f = 1 : last_block %size(files, 1)  % is is to avoid reading of duplicate blocks
         
-        fname = files(i_f).name;  % file name of eye recordings
-        disp(fname);
+        files = dir(sprintf('%seyelink_%s_%s_*sess_%03i_block_%03i.mat.asc', cfg.dir.eye, condition, subject, session, i_f));  % list files in directory
         
-        asc = readEyelink(fullfile(cfg.dir.eye, fname));  % load file and struct eyelinkdata
-        
-        if isempty(asc)
-            error('Eye Tracking data is empty.');
-        end
-        
-        
-        % remove rows when timing is nan
-        % -------------------------------------------------------------------------
-        nanrows = find(isnan(asc.Numeric_events(:, 1)));  % find rows where time stamp is nan
-        
-        if any(diff(nanrows) > 10 & diff(nanrows) < 500) 
-            error('Nan timing during measurement detected.');  % nan timing at begin and end of measurement is normal
-        end
-        
-        asc.Numeric_events(nanrows, :) = [];  % delete nan rows
-        
-        
-        % check distance between blocks from time stamp. Add spacing, so
-        % filters work correctly
-        % -------------------------------------------------------------------------
-        
-        if i_f > 1
-            missing_samples    = asc.Numeric_events(1, 1) - eyelinkdata(end, 1) - 1;  % how many samples are missing between the begin of the current block and the end of the previous one?
-            missing            = nan(missing_samples, size(asc.Numeric_events, 2));  % pre allocate as nan
-            missing(:, 1)      = (eyelinkdata(end, 1) + 1) :  (asc.Numeric_events(1, 1) - 1);  % add missing time stamps
-            asc.Numeric_events = [missing; asc.Numeric_events];  % add at begin of new data
-        end
-        
-        
-        % add session number as collumn
-        % -------------------------------------------------------------------------
-        asc.Numeric_events(:, end + 1) = session;
-        
-        
-        % add block number (from file names) as collumn
-        % -------------------------------------------------------------------------
-        fname = fname(1 : end - 8);
-        fname = strsplit(fname, '_');
-        block = str2double(fname{end});
-        asc.Numeric_events(:, end + 1) = block;
-        
-        
-        % add block to data
-        % -------------------------------------------------------------------------
-        eyelinkdata = [eyelinkdata; asc.Numeric_events];
-        
-    end % for loop files
+        if ~isempty(files)
+            fname = files(end).name;  % file name of eye recordings
+            disp(fname);
+            
+            asc = readEyelink(fullfile(cfg.dir.eye, fname));  % load file and struct eyelinkdata
+            
+            if isempty(asc)
+                error('Eye Tracking data is empty.');
+            end
+            
+            
+            % remove rows when timing is nan
+            % -------------------------------------------------------------------------
+            nanrows = find(isnan(asc.Numeric_events(:, 1)));  % find rows where time stamp is nan
+            
+            if any(diff(nanrows) > 10 & diff(nanrows) < 500)
+                error('Nan timing during measurement detected.');  % nan timing at begin and end of measurement is normal
+            end
+            
+            asc.Numeric_events(nanrows, :) = [];  % delete nan rows
+            
+            
+            % check distance between blocks from time stamp. Add spacing, so
+            % filters work correctly
+            % -------------------------------------------------------------------------
+            
+            if ~isempty(eyelinkdata)
+                missing_samples    = asc.Numeric_events(1, 1) - eyelinkdata(end, 1) - 1;  % how many samples are missing between the begin of the current block and the end of the previous one?
+                missing            = nan(missing_samples, size(asc.Numeric_events, 2));  % pre allocate as nan
+                missing(:, 1)      = (eyelinkdata(end, 1) + 1) :  (asc.Numeric_events(1, 1) - 1);  % add missing time stamps
+                asc.Numeric_events = [missing; asc.Numeric_events];  % add at begin of new data
+            end
+            
+            
+            % add session number as collumn
+            % -------------------------------------------------------------------------
+            asc.Numeric_events(:, end + 1) = session;
+            
+            
+            % add block number (from file names) as collumn
+            % -------------------------------------------------------------------------
+            fname = fname(1 : end - 8);
+            fname = strsplit(fname, '_');
+            block = str2double(fname{end});
+            asc.Numeric_events(:, end + 1) = block;
+            
+            
+            % add block to data
+            % -------------------------------------------------------------------------
+            eyelinkdata = [eyelinkdata; asc.Numeric_events];
+            
+        end  % if we have a file for this block
+    end % for loop blocks
     
     
     % save row names for later
@@ -255,14 +259,14 @@ if ~isempty(files)  % ig there are any files
     
     % replace single nan values in INPUT
     % -------------------------------------------------------------------------
-    if any(isnan(EYEDATA.INPUT))
-        
-        nansamples = find(isnan(EYEDATA.INPUT));
-        nansamples(nansamples == 1) = [];
-        EYEDATA.INPUT(nansamples) = EYEDATA.INPUT(nansamples - 1);
-        fprintf('Removed NaN in EYEDATA.INPUT.\n');
-    end
-    
+    %     if any(isnan(EYEDATA.INPUT))
+    %
+    %         nansamples = find(isnan(EYEDATA.INPUT));
+    %         nansamples(nansamples == 1) = [];
+    %         EYEDATA.INPUT(nansamples) = EYEDATA.INPUT(nansamples - 1);
+    %         fprintf('Removed NaN in EYEDATA.INPUT.\n');
+    %     end
+    %
     
     % z-score pupil time series
     % -------------------------------------------------------------------------
