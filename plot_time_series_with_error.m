@@ -9,15 +9,11 @@ function plot_time_series_with_error(D, color, samplingrate, zero_offset)
 %
 % Author:        Antonius Wiehler <antonius.wiehler@gmail.com>
 % Original:      2017-03-01
-% Last modified: 2018-02-22
+% Last modified: 2017-05-11
 
 if ~exist('zero_offset', 'var')
     zero_offset = 0;  % set pre stimulus interval to 0 if not defined
 end
-
-% remove all nan rows
-nanrows = all(isnan(D), 2);
-D(nanrows, :) = [];
 
 % compute mean and SEM
 if size(D, 1) == 1  % if we have only one time course plot it without mean
@@ -45,9 +41,9 @@ plot(x, ct, 'linestyle', '-', 'LineWidth', 1, 'color', color);
 % set x-axis ticks
 start_x_tick   = rem(zero_offset, samplingrate);
 end_x_tick     = size(ct, 2);
-xtickposition1 = [start_x_tick : samplingrate : zero_offset];
+xtickposition1 = [start_x_tick : samplingrate/2 : zero_offset];
 xtickposition1 = xtickposition1(1 : end - 1);  % to avoid duplicate with xtickposition2
-xtickposition2 = [zero_offset : samplingrate : end_x_tick];
+xtickposition2 = [zero_offset : samplingrate/2 : end_x_tick];
 xtickposition  = [xtickposition1 xtickposition2];
 set(gca, 'XTick', xtickposition);
 
