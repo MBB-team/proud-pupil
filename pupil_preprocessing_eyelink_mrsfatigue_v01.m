@@ -8,7 +8,7 @@ function [] = pupil_preprocessing_eyelink_mrsfatigue_v01(subject, condition, ses
 %
 %   Author: Antonius Wiehler <antonius.wiehler@gmail.com>
 %   Original: 2017-01-12
-%   Modified: 2017-06-23
+%   Modified: 2018-03-02
 
 
 
@@ -34,7 +34,7 @@ cfg.eye.blinkwindow          = 0.125;  % how many seconds before and after blink
 cfg.eye.mad_cutoff           = 3;    % ouliers of how many mad should be rejected? (median deviance)
 cfg.eye.highpass_filter      = 1/128;  % pupil highpass filter in Hz.
 cfg.eye.lowpass_filter       = 1;    % Filter everything faster than this Hz.
-
+cfg.eye.delete_at_begin      = 2000;  % how many samples at the beginning should be deleted to remove filter artifacts?
 cfg.eye.border_size          = 0.1;  % how many percent of screen should be considered as periphical?
 % directories
 % -------------------------------------------------------------------------
@@ -238,7 +238,7 @@ if ~isempty(files)  % ig there are any files
     % artefacts
     % -------------------------------------------------------------------------
     
-    blink_indx(1:2000) = 1;  % to remove filter artefacts at start
+    blink_indx(1 : cfg.eye.delete_at_begin) = 1;  % to remove filter artefacts at start
     eyelinkdata(blink_indx, strcmp(eyelinkdata_names, 'PS')) = cfg.eye.blink;
     
     eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = interpolate_blinks_v01(eyelinkdata(:, ...
