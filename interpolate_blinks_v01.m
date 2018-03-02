@@ -1,5 +1,5 @@
-function [d] = interpolate_blinks_v01(d , blink, samplingrate, blinkWindow)
-% function [d] = interpolate_blinks_v01(d , blink, samplingrate, blinkWindow)
+function [d, blink_indx] = interpolate_blinks_v01(d , blink, samplingrate, blinkWindow)
+% function [d, blink_indx] = interpolate_blinks_v01(d , blink, samplingrate, blinkWindow)
 %
 % Interpolate blinks in 1D pupil size measures.
 %
@@ -7,7 +7,7 @@ function [d] = interpolate_blinks_v01(d , blink, samplingrate, blinkWindow)
 % blink: how is a blink defined in the data, usually 0
 % samplingrate: samplingrate of the eyetracker
 % blinkWindow: how many seconds should be removed before and after a blink?
-%
+% blink_indx: Where are blinks?
 % The function depends on MergeBrackets.m
 %
 % Author: Antonius Wiehler <antonius.wiehler@gmail.com>
@@ -18,7 +18,8 @@ function [d] = interpolate_blinks_v01(d , blink, samplingrate, blinkWindow)
 sampleLength   = 1 ./ samplingrate;  % how long is one sample in seconds?
 blink_samples  = ceil(blinkWindow ./ sampleLength);  % how many samples do we have to remove before and after a blink?
 
-blink_position = [0; d == blink; 0];  % where is the pupil diameter a blink?
+blink_indx     = d == blink;
+blink_position = [0; blink_indx; 0];  % where is the pupil diameter a blink?
 
 blink_start    = find(diff(blink_position) == 1);  % where do the blinks start?
 blink_stop     = find(diff(blink_position) == -1) -1;  % where do blinks end?
