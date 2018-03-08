@@ -24,7 +24,7 @@ cfg.ptb.ScreenY              = 768; % screen size Y TODO: read from PTB
 % eye tracker
 % -------------------------------------------------------------------------
 cfg.eye.samplingrate_eyelink = 1000;   % sampling rate we want to have after pre processing
-cfg.eye.samplingrate         = 60;   % sampling rate we want to have after pre processing
+cfg.eye.samplingrate         = 1000;   % sampling rate we want to have after pre processing
 
 
 % preprocessing parameter
