@@ -12,7 +12,7 @@ function [d, blink_indx] = interpolate_blinks_v01(d , blink, samplingrate, blink
 %
 % Author: Antonius Wiehler <antonius.wiehler@gmail.com>
 % Original: 2017-01-11
-% Modified: 2017-06-22
+% Modified: 2018-03-02
 
 
 sampleLength   = 1 ./ samplingrate;  % how long is one sample in seconds?

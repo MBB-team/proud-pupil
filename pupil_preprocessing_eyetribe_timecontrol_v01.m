@@ -8,7 +8,7 @@ function [] = pupil_preprocessing_eyetribe_timecontrol_v01(subject)
 %
 %   Author: Antonius Wiehler <antonius.wiehler@gmail.com>
 %   Original: 2017-10-30
-%   Modified: 2017-10-31
+%   Modified: 2018-03-02
 
 
 
@@ -30,11 +30,12 @@ cfg.eye.samplingrate         = 60;   % sampling rate we want to have after pre p
 % -------------------------------------------------------------------------
 cfg.eye.goodstate            = 7;    % good state of eye tracker. / for eye tribe
 cfg.eye.blink                = 0;   % how to mark a blink in the pupil time series
-cfg.eye.blinkwindow          = 0.1;  % how many seconds before and after blink do we want to remove?
+cfg.eye.blinkwindow          = 0.125;  % how many seconds before and after blink do we want to remove?
 cfg.eye.mad_cutoff           = 3;    % ouliers of how many mad should be rejected? (median deviance)
 cfg.eye.highpass_filter      = 1/128;  % pupil highpass filter in Hz.
 cfg.eye.lowpass_filter       = 1;    % Filter everything faster than this Hz.
 cfg.eye.border_size          = 0.1;  % how many percent of screen should be considered as periphical?
+cfg.eye.delete_at_begin      = 2000;  % how many samples at the beginning should be deleted to remove filter artifacts?
 
 
 % directories
@@ -191,8 +192,8 @@ if ~isempty(files)  % ig there are any files
     
     % linear interpolate blinks and bad states +- window
     % -------------------------------------------------------------------------
-    eyeTrackdata.LEyePsize = interpolate_blinks_v01(eyeTrackdata.LEyePsize, cfg.eye.blink, samplingrate, cfg.eye.blinkwindow);
-    eyeTrackdata.REyePsize = interpolate_blinks_v01(eyeTrackdata.REyePsize, cfg.eye.blink, samplingrate, cfg.eye.blinkwindow);
+    [eyeTrackdata.LEyePsize, blink_indxL] = interpolate_blinks_v01(eyeTrackdata.LEyePsize, cfg.eye.blink, samplingrate, cfg.eye.blinkwindow);
+    [eyeTrackdata.REyePsize, blink_indxR] = interpolate_blinks_v01(eyeTrackdata.REyePsize, cfg.eye.blink, samplingrate, cfg.eye.blinkwindow);
     
     
     % band-pass filter to remove slow fluctuations and to smooth
@@ -202,6 +203,19 @@ if ~isempty(files)  % ig there are any files
     
     eyeTrackdata.REyePsize = bandpass_filter_v01(eyeTrackdata.REyePsize,...
         samplingrate, cfg.eye.highpass_filter, cfg.eye.lowpass_filter);
+    
+    
+    % linear interpolate blinks and bad states +- window again to avoid
+    % bandpass filter artefacts
+    % -------------------------------------------------------------------------
+    blink_indxL(1 : cfg.eye.delete_at_begin) = 1;  % to remove filter artefacts at start
+    blink_indxR(1 : cfg.eye.delete_at_begin) = 1;  % to remove filter artefacts at start
+    
+    eyeTrackdata.LEyePsize(blink_indxL) = cfg.eye.blink;
+    eyeTrackdata.REyePsize(blink_indxR) = cfg.eye.blink;
+    
+    eyeTrackdata.LEyePsize = interpolate_blinks_v01(eyeTrackdata.LEyePsize, cfg.eye.blink, samplingrate, cfg.eye.blinkwindow);
+    eyeTrackdata.REyePsize = interpolate_blinks_v01(eyeTrackdata.REyePsize, cfg.eye.blink, samplingrate, cfg.eye.blinkwindow);
     
     
     % interpolate to target sampling rate
