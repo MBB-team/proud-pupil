@@ -78,6 +78,11 @@ if ~isempty(files)  % ig there are any files
     for i_f = 1 : length(files)
         fprintf('Loading file %s...\n', files(i_f).name);
         data{i_f} = load(fullfile(cfg.dir.eye, files(i_f).name));
+        
+        if isempty(data{i_f}.eyeTrackdata)  % if there is no data in it delete file
+            data(i_f) = [];
+        end
+        
         fprintf('done.\n');
     end
     
