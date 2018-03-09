@@ -23,7 +23,7 @@ cfg.ptb.ScreenY              = 768; % screen size Y TODO: read from PTB
 
 % eye tracker
 % -------------------------------------------------------------------------
-cfg.eye.samplingrate_eyelink = 1000;   % sampling rate we want to have after pre processing
+cfg.eye.samplingrate_eyelink = 1000;   % sampling rate we have recorded with
 cfg.eye.samplingrate         = 1000;   % sampling rate we want to have after pre processing
 
 
@@ -34,8 +34,10 @@ cfg.eye.blinkwindow          = 0.125;  % how many seconds before and after blink
 cfg.eye.mad_cutoff           = 3;    % ouliers of how many mad should be rejected? (median deviance)
 cfg.eye.highpass_filter      = 1/128;  % pupil highpass filter in Hz.
 cfg.eye.lowpass_filter       = 1;    % Filter everything faster than this Hz.
-cfg.eye.delete_at_begin      = 2000;  % how many samples at the beginning should be deleted to remove filter artifacts?
+cfg.eye.delete_at_begin      = 3;  % how many seconds at the beginning should be deleted to remove filter artifacts?
 cfg.eye.border_size          = 0.1;  % how many percent of screen should be considered as periphical?
+
+
 % directories
 % -------------------------------------------------------------------------
 cfg.dir.eye                  = 'outputs/eyelink/';  % where are the original *.asc files stored?
@@ -238,7 +240,7 @@ if ~isempty(files)  % ig there are any files
     % artefacts
     % -------------------------------------------------------------------------
     
-    blink_indx(1 : cfg.eye.delete_at_begin) = 1;  % to remove filter artefacts at start
+    blink_indx(1 : (cfg.eye.delete_at_begin * cfg.eye.samplingrate)) = 1;  % to remove filter artefacts at start
     eyelinkdata(blink_indx, strcmp(eyelinkdata_names, 'PS')) = cfg.eye.blink;
     
     eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = interpolate_blinks_v01(eyelinkdata(:, ...
@@ -249,23 +251,25 @@ if ~isempty(files)  % ig there are any files
     % -------------------------------------------------------------------------
     sampling_factor = round(cfg.eye.samplingrate_eyelink ./ cfg.eye.samplingrate);  % by what factor do we need to reduce?
     
-    % downsamples with low pass filtering, used for measures
-    %     EYEDATA.PS       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), sampling_factor);
-    %EYEDATA.XP       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')), sampling_factor);
-    %EYEDATA.YP       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'YP')), sampling_factor);
-    
-    % downsample without low pass filtering, used for markers etc.
-    %     EYEDATA.TIME     = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'TIME')), sampling_factor);
-    %     EYEDATA.INPUT    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'INPUT')), sampling_factor);
-    %     EYEDATA.SESSION  = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'SESSION')), sampling_factor);
-    %     EYEDATA.BLOCK    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BLOCK')), sampling_factor);
-    
-    % only include the next variables if you really need them later
-    % EYEDATA.BUTTON   = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BUTTON')), sampling_factor);
-    % EYEDATA.BLINK    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BLINK')), sampling_factor);
-    % EYEDATA.SACCADE  = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'SACCADE')), sampling_factor);
-    % EYEDATA.FIXATION = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'FIXATION')), sampling_factor);
-    
+    if sampling_factor > 1
+        % downsamples with low pass filtering, used for measures
+        EYEDATA.PS       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), sampling_factor);
+        EYEDATA.XP       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')), sampling_factor);
+        EYEDATA.YP       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'YP')), sampling_factor);
+        
+        % downsample without low pass filtering, used for markers etc.
+        EYEDATA.TIME     = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'TIME')), sampling_factor);
+        EYEDATA.INPUT    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'INPUT')), sampling_factor);
+        EYEDATA.SESSION  = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'SESSION')), sampling_factor);
+        EYEDATA.BLOCK    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BLOCK')), sampling_factor);
+        
+        % only include the next variables if you really need them later
+        EYEDATA.BUTTON   = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BUTTON')), sampling_factor);
+        EYEDATA.BLINK    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BLINK')), sampling_factor);
+        EYEDATA.SACCADE  = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'SACCADE')), sampling_factor);
+        EYEDATA.FIXATION = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'FIXATION')), sampling_factor);
+        
+    end
     
     
     % if we dont want to resample
