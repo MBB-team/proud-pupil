@@ -227,24 +227,24 @@ if ~isempty(files)  % ig there are any files
     % -------------------------------------------------------------------------
     
     [eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), blink_indx] = interpolate_blinks_v01(eyelinkdata(:, ...
-        strcmp(eyelinkdata_names, 'PS')), cfg.eye.blink, cfg.eye.samplingrate, cfg.eye.blinkwindow);
+        strcmp(eyelinkdata_names, 'PS')), cfg.eye.blink, cfg.eye.samplingrate_eyelink, cfg.eye.blinkwindow);
     
     
     % band-pass filter to remove slow fluctuations and to smooth
     % -------------------------------------------------------------------------
     eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = bandpass_filter_v01(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')),...
-        cfg.eye.samplingrate, cfg.eye.highpass_filter, cfg.eye.lowpass_filter);
+        cfg.eye.samplingrate_eyelink, cfg.eye.highpass_filter, cfg.eye.lowpass_filter);
     
     
     % linear interpolate blinks and bad states +- window again to remove
     % artefacts
     % -------------------------------------------------------------------------
     
-    blink_indx(1 : (cfg.eye.delete_at_begin * cfg.eye.samplingrate)) = 1;  % to remove filter artefacts at start
+    blink_indx(1 : (cfg.eye.delete_at_begin * cfg.eye.samplingrate_eyelink)) = 1;  % to remove filter artefacts at start
     eyelinkdata(blink_indx, strcmp(eyelinkdata_names, 'PS')) = cfg.eye.blink;
     
     eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')) = interpolate_blinks_v01(eyelinkdata(:, ...
-        strcmp(eyelinkdata_names, 'PS')), cfg.eye.blink, cfg.eye.samplingrate, cfg.eye.blinkwindow);
+        strcmp(eyelinkdata_names, 'PS')), cfg.eye.blink, cfg.eye.samplingrate_eyelink, cfg.eye.blinkwindow);
     
     
     % downsampling
@@ -269,7 +269,7 @@ if ~isempty(files)  % ig there are any files
         EYEDATA.SACCADE  = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'SACCADE')), sampling_factor);
         EYEDATA.FIXATION = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'FIXATION')), sampling_factor);
         
-    end
+    else
     
     
     % if we dont want to resample
@@ -284,7 +284,7 @@ if ~isempty(files)  % ig there are any files
     
     
     
-    
+    end
     
     
     
@@ -302,10 +302,14 @@ if ~isempty(files)  % ig there are any files
     %     end
     %
     
+   
+    
     % z-score pupil time series
     % -------------------------------------------------------------------------
     EYEDATA.PsizeZ = zscore(EYEDATA.PS);
     EYEDATA = removefields(EYEDATA, 'PS');
+    
+    
     
     % plot after filter and smoothing
     % -------------------------------------------------------------------------
