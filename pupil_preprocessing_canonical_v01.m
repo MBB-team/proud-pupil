@@ -1,87 +1,83 @@
-function [pupil_size, timestamps] = pupil_preprocessing_canonical_v01(timestamps, pupil_size, valid_recording, gaze_pos)
-% function [pupil_size, timestamps] = pupil_preprocessing_canonical_v01(timestamps, pupil_size, valid_recording, gaze_pos)
+function [pupil_size, timestamps, sampling_factor] = pupil_preprocessing_canonical_v01(timestamps, pupil_size, valid_recording)
+% function [pupil_size, timestamps, sampling_factor] = pupil_preprocessing_canonical_v01(timestamps, pupil_size, valid_recording)
 %
 %  Preprocessing of pupil recordings.
 %  On a timeseries of pupil diameter, the following preprocessing steps are
 %  performed:
-%  1) Calculate the measured sampling rate
-%  2) Remove samples when fixation was at the border of the screen
-%  3) Remove outliers outside 3 MAD
-%  4) Bandpass filter
-%  5) Linearly interpolate bad states
-%  6) Downsampling to 60Hz if needed
-%  7) Z-score
+%  1) Calculate the recorded sampling rate
+%  2) Remove outliers outside 3 MAD
+%  3) Bandpass filter
+%  4) Linearly interpolate bad states
+%  5) Downsampling to 60Hz if needed
+%  6) Z-score
 %
 %  If you have recordings form both eyes, please preprocess each eye
-%  separately, and averadge them afterwards.
+%  separately, and average them afterwards.
+%
+%  Please add SPM12 to your path before running this script.
 %
 %   Inputs
-%   timestamps:     Vector of time stamps, in ms resolution, size: nx1
+%   timestamps:      Vector of time stamps, in ms resolution, size: nx1
 %   pupil_size:      Vector of pupil diameter, size: nx1
-%   valid_recording: Vector, that indicates 0 when there is a blink etc.,
-%                    as reported by the eyetracker and 1 if there is no
-%                    problem with then signal. 0 parts will be interpolated
-%                    in pupil_size later. size: nx1
-%   gaze_pos:        Matrix of x and y gaze coordinates, in range of 0 to
-%                    1 (normalized to your screen size). size: nx2
+%   valid_recording: Vector indicating good and bad states of recording (signal lost,
+%                    fixations outside your stimuli on the screen, blinks etc.) 
+%                    The results should be a vector, indicating for each time sample
+%                    if it is valid (1) or not (0).  0 parts will be interpolated
+%                    in pupil_size later. Size: nx1
 %
 %   Outputs
-%   pupil_size:      preprocessed pupil_size.
-%   timestamps:     timestamps after interpolation, downsampling etc.
+%   pupil_size:      Preprocessed pupil_size vector.
+%   timestamps:      Timestamps after interpolation, downsampling etc.
+%   sampling_factor: How much we did up- or downsample
 %
 %   Author: Antonius Wiehler <antonius.wiehler@gmail.com>
 %   Original: 2018-03-16
-%   Modified: 2018-03-16
+%   Modified: 2018-03-22
 
 
 
-%% PARAMETERS - DO NOT TOUCH :)
+%% PARAMETERS - PLEASE DO NOT TOUCH :)
 % =========================================================================
-cfg.pupil.blink           = 0;  % bad data in the pupil vector will be replaced by this
-cfg.pupil.samplingrate    = 60;  % sampling rate we want to have after preprocessing
-cfg.pupil.blinkwindow     = 0.125;  % how many seconds before and after blink do we want to remove?
-cfg.pupil.mad_cutoff      = 3;  % ouliers of how many mad should be rejected? (median deviance)
+cfg.pupil.blink           = 0;      % bad data in the pupil vector will be replaced by this
+cfg.pupil.samplingrate    = 60;     % sampling rate we want to have after preprocessing
+cfg.pupil.blinkwindow     = 0.1;    % how many seconds before and after blink do we want to remove?
+cfg.pupil.mad_cutoff      = 3;      % ouliers of how many mad should be rejected? (median deviance)
 cfg.pupil.highpass_filter = 1/128;  % pupil highpass filter in Hz.
-cfg.pupil.lowpass_filter  = 1;  % Filter everything faster than this Hz.
-cfg.pupil.delete_at_begin = 3;  % how many seconds at the beginning should be deleted to remove filter artifacts?
-cfg.pupil.border_size     = 0.1;  % how many percent of screen should be considered as periphical?
-
-% TODO CHECK FOR SPM FOLDER
-cfg.dir.spm                  = '~/matlab_toolboxes/spm12/';  % whre is the SPM installation? Used for high pass filter
-addpath(genpath(cfg.dir.spm));  % add spm for spm_filter function
-
+cfg.pupil.lowpass_filter  = 1;      % Filter everything faster than this Hz.
+cfg.pupil.delete_at_begin = 3;      % how many seconds at the beginning of the timeseries should be deleted to remove filter artifacts?
 
 
 %% CHECKS
 % =========================================================================
-% TODO CHECK IF WE HAVE ENOUGH INPUTS
+if nargin < 3
+    error('Not enough input arguments.');
+end
 
-% TODO CHECK IF ALL VARIABLES HAVE THE SAME LENGTH
+% correct vector orientation
+timestamps = timestamps(:);
+pupil_size = pupil_size(:);
+valid_recording = valid_recording(:);
+
+if ~all(size(pupil_size) == size(timestamps) & size(pupil_size) == size(valid_recording))
+    error('Inputs do not have the same length.');
+end
+
+if ~contains(path, 'spm')
+    error('Please add SPM12 to your path before running this script.');
+end
+
 
 %% PREPROCESSING
 % =========================================================================
 
 % calculate sampling rate
 % -------------------------------------------------------------------------
-samplingrate = eyetribe_estimate_samplingrate_v01(timestamps);
+samplingrate = estimate_samplingrate_v01(timestamps);
 
-% TODO CHECK IF AROUND 60 OR NOT
 
 % remove bad states
 % -------------------------------------------------------------------------
 pupil_size(~valid_recording) = cfg.pupil.blink;
-
-
-% remove fixations outside screen borders
-% -------------------------------------------------------------------------
-pupil_size = delete_periphical_fixations_v01(pupil_size, gaze_pos(:, 1) * 1000, gaze_pos(:, 2) * 1000, ...
-    1000, 1000, cfg.pupil.border_size, cfg.pupil.blink);
-
-
-% TODO correct for gaze position
-% -------------------------------------------------------------------------
-% For the eyetracker, the pupil appears to be smaller when looking at
-% the screen border (ellipse cut of the pupil).
 
 
 % exclude samples that are outside mad_cutoff - remove outliers
@@ -115,19 +111,32 @@ pupil_size = interpolate_blinks_v01(pupil_size, cfg.pupil.blink, samplingrate, c
 
 % downsampling
 % -------------------------------------------------------------------------
-sampling_factor = round(samplingrate ./ cfg.pupil.samplingrate);  % by what factor do we need to reduce?
+sampling_factor = samplingrate / cfg.pupil.samplingrate;  % by what factor do we need to reduce?
 
-if sampling_factor > 1
+if sampling_factor > 1.1
+    
     % downsamples with low pass filtering, used for measures
-    pupil_size       = decimate(pupil_size, sampling_factor);
+    pupil_size = decimate(pupil_size, sampling_factor);
     
     % downsample without low pass filtering, used for markers etc.
-    timestamps     = downsample(timestamps, sampling_factor);
+    timestamps = downsample(timestamps, sampling_factor);
     
-elseif sampling_factor < 1
-    % TODO IF WE NEED TO UPSAMPLE
+    fprintf('Time series was downsampled from %.2fHz to %.2fHz.\n', samplingrate, cfg.pupil.samplingrate);
+    
+elseif sampling_factor < 0.9
+    
+    x          = 1 : length(timestamps);
+    xq         = 1 : sampling_factor : length(timestamps) + 1;
+    timestamps = interp1(x, timestamps, xq)';
+    pupil_size = interp1(x, pupil_size, xq)';
+    timestamps = timestamps(1 : end - 2, :);  % remove last to samples because they are likely nan
+    pupil_size = pupil_size(1 : end - 2, :);  % remove last to samples because they are likely nan
+    
+    fprintf('Time series was upsampled from %.2fHz to %.2fHz.\n', samplingrate, cfg.pupil.samplingrate);
+    
 else
-    %  TODO
+    % if we are in the accuracy range, we do not touch
+    sampling_factor = nan;  % just to return a value
 end
 
 
@@ -140,5 +149,5 @@ pupil_size = zscore(pupil_size);
 % -------------------------------------------------------------------------
 fprintf('Pupil preprocessing done - %.2f%% of samples rejected.\n', sum(nSamplesRejected) * 100);  % done :)
 
-end  % main function
 
+end  % main function
