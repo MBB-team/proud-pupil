@@ -8,7 +8,7 @@ function [pupil_size, timestamps, sampling_factor] = pupil_preprocessing_canonic
 %  2) Remove outliers outside 3 MAD
 %  3) Bandpass filter
 %  4) Linearly interpolate bad states
-%  5) Downsampling to 60Hz if needed
+%  5) Resampling to 60Hz if needed
 %  6) Z-score
 %
 %  If you have recordings form both eyes, please preprocess each eye
@@ -22,7 +22,7 @@ function [pupil_size, timestamps, sampling_factor] = pupil_preprocessing_canonic
 %   valid_recording: Vector indicating good and bad states of recording (signal lost,
 %                    fixations outside your stimuli on the screen, blinks etc.) 
 %                    The results should be a vector, indicating for each time sample
-%                    if it is valid (1) or not (0).  0 parts will be interpolated
+%                    if it is valid (1) or not (0).  Samples marked with 0 will be interpolated
 %                    in pupil_size later. Size: nx1
 %
 %   Outputs
@@ -32,7 +32,7 @@ function [pupil_size, timestamps, sampling_factor] = pupil_preprocessing_canonic
 %
 %   Author: Antonius Wiehler <antonius.wiehler@gmail.com>
 %   Original: 2018-03-16
-%   Modified: 2018-03-22
+%   Modified: 2018-04-11
 
 
 
