@@ -190,8 +190,12 @@ if ~isempty(files)  % ig there are any files
     
     valid_recording(outside_samples) = 0;
     
-    
-    
+    % nan cleaning
+    % -------------------------------------------------------------------------
+    eyelinkdata(isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS'))), strcmp(eyelinkdata_names, 'PS')) = 0;
+    eyelinkdata(isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP'))), strcmp(eyelinkdata_names, 'XP')) = 0;
+    eyelinkdata(isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'YP'))), strcmp(eyelinkdata_names, 'YP')) = 0;
+    eyelinkdata(isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'INPUT'))), strcmp(eyelinkdata_names, 'INPUT')) = 0;
     
     
     % downsampling
@@ -200,9 +204,7 @@ if ~isempty(files)  % ig there are any files
     
     if sampling_factor > 1
         % downsamples with low pass filtering, used for measures
-        eyelinkdata(isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS'))), strcmp(eyelinkdata_names, 'PS')) = 0;
-        eyelinkdata(isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP'))), strcmp(eyelinkdata_names, 'XP')) = 0;
-        eyelinkdata(isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'YP'))), strcmp(eyelinkdata_names, 'YP')) = 0;
+        
         
         EYEDATA.PS       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), sampling_factor);
         EYEDATA.XP       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')), sampling_factor);
@@ -217,16 +219,18 @@ if ~isempty(files)  % ig there are any files
         valid_recording  = valid_recording > 0.5;
         
         % only include the next variables if you really need them later
-        EYEDATA.BUTTON   = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BUTTON')), sampling_factor);
-        EYEDATA.BLINK    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BLINK')), sampling_factor);
-        EYEDATA.SACCADE  = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'SACCADE')), sampling_factor);
-        EYEDATA.FIXATION = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'FIXATION')), sampling_factor);
+        %         EYEDATA.BUTTON   = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BUTTON')), sampling_factor);
+        %         EYEDATA.BLINK    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BLINK')), sampling_factor);
+        %         EYEDATA.SACCADE  = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'SACCADE')), sampling_factor);
+        %         EYEDATA.FIXATION = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'FIXATION')), sampling_factor);
         
     else
         
         
         % if we dont want to resample
         EYEDATA.PS       = eyelinkdata(:, strcmp(eyelinkdata_names, 'PS'));
+        EYEDATA.XP       = eyelinkdata(:, strcmp(eyelinkdata_names, 'XP'));
+        EYEDATA.YP       = eyelinkdata(:, strcmp(eyelinkdata_names, 'YP'));
         
         
         % downsample without low pass filtering, used for markers etc.
