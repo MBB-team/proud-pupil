@@ -154,8 +154,9 @@ if ~isempty(files)  % ig there are any files
     
     
     % plot screen fixations
+    % -------------------------------------------------------------------------
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 1);
-    plot(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')), -eyelinkdata(:, strcmp(eyelinkdata_names, 'YP')), '.');  % plot fixations. Careful, Y axis is inverted in data!
+    ndhist(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')), -eyelinkdata(:, strcmp(eyelinkdata_names, 'YP')), 'filter', 15);  % plot heat map of fixations. Careful, Y axis is inverted in data!
     title('Screen fixations');
     set(gca, 'FontSize', cfg.fig.fsiz);
     
