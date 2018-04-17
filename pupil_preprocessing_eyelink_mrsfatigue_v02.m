@@ -190,29 +190,51 @@ if ~isempty(files)  % ig there are any files
     
     
     valid_recording(outside_samples) = 0;
+   
+    valid_recording(isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')))) = 0;
     
-    % nan cleaning
+    
+    % plot time series after artifact removal
     % -------------------------------------------------------------------------
-    eyelinkdata(isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS'))), strcmp(eyelinkdata_names, 'PS')) = 0;
-    eyelinkdata(isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP'))), strcmp(eyelinkdata_names, 'XP')) = 0;
-    eyelinkdata(isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'YP'))), strcmp(eyelinkdata_names, 'YP')) = 0;
-    eyelinkdata(isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'INPUT'))), strcmp(eyelinkdata_names, 'INPUT')) = 0;
+    subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 4 : 6);
+    tmp_plot = eyelinkdata(:, strcmp(eyelinkdata_names, 'PS'));
+    tmp_plot(~valid_recording) = nan;  % for plot replace blinks with nan
+    plot(tmp_plot);
+    tmp_plot = [];  % delete tmp_plot again
+    title('pupil after artifact removal'); % plot before high pass filter
+    set(gca, 'FontSize', cfg.fig.fsiz);
     
     
+    % plot frequency spectrum
+    % -------------------------------------------------------------------------
+    subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 2);
+    frequency_spectrum_plot(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), ...
+        cfg.eye.samplingrate_eyelink); % frequency spectrum plot before high pass filter
+    title('Before high-pass filter');
+    set(gca, 'FontSize', cfg.fig.fsiz);
+    
+    
+    % PREPARE DATA
+    % -------------------------------------------------------------------------
+     EYEDATA.PS       = eyelinkdata(:, strcmp(eyelinkdata_names, 'PS'));
+        EYEDATA.TIME       = eyelinkdata(:, strcmp(eyelinkdata_names, 'TIME'));
+    
+    % MAIN PREPROCESSING
+    % -------------------------------------------------------------------------
+    [EYEDATA.PS, EYEDATA.TIME, sampling_factor] = pupil_preprocessing_canonical_v01(EYEDATA.TIME, EYEDATA.PS, valid_recording);
+    
+    
+        
     % downsampling
     % -------------------------------------------------------------------------
-    sampling_factor = round(cfg.eye.samplingrate_eyelink ./ cfg.eye.samplingrate);  % by what factor do we need to reduce?
     
     if sampling_factor > 1
         % downsamples with low pass filtering, used for measures
-        
-        
-        EYEDATA.PS       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')), sampling_factor);
+                
         EYEDATA.XP       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')), sampling_factor);
         EYEDATA.YP       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'YP')), sampling_factor);
         
         % downsample without low pass filtering, used for markers etc.
-        EYEDATA.TIME     = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'TIME')), sampling_factor);
         EYEDATA.INPUT    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'INPUT')), sampling_factor);
         EYEDATA.SESSION  = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'SESSION')), sampling_factor);
         EYEDATA.BLOCK    = downsample(eyelinkdata(:, strcmp(eyelinkdata_names, 'BLOCK')), sampling_factor);
@@ -229,13 +251,11 @@ if ~isempty(files)  % ig there are any files
         
         
         % if we dont want to resample
-        EYEDATA.PS       = eyelinkdata(:, strcmp(eyelinkdata_names, 'PS'));
         EYEDATA.XP       = eyelinkdata(:, strcmp(eyelinkdata_names, 'XP'));
         EYEDATA.YP       = eyelinkdata(:, strcmp(eyelinkdata_names, 'YP'));
         
         
         % downsample without low pass filtering, used for markers etc.
-        EYEDATA.TIME     = eyelinkdata(:, strcmp(eyelinkdata_names, 'TIME'));
         EYEDATA.INPUT    = eyelinkdata(:, strcmp(eyelinkdata_names, 'INPUT'));
         EYEDATA.SESSION  = eyelinkdata(:, strcmp(eyelinkdata_names, 'SESSION'));
         EYEDATA.BLOCK    = eyelinkdata(:, strcmp(eyelinkdata_names, 'BLOCK'));
@@ -243,36 +263,6 @@ if ~isempty(files)  % ig there are any files
         
         
     end
-    
-    
-    valid_recording(isnan(EYEDATA.PS)) = 0;
-    
-    
-    % plot time series after artifact removal
-    % -------------------------------------------------------------------------
-    subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 4 : 6);
-    tmp_plot = EYEDATA.PS;
-    tmp_plot(~valid_recording) = nan;  % for plot replace blinks with nan
-    plot(tmp_plot);
-    tmp_plot = [];  % delete tmp_plot again
-    title('pupil after artifact removal'); % plot before high pass filter
-    set(gca, 'FontSize', cfg.fig.fsiz);
-    
-    
-    % plot frequency spectrum
-    % -------------------------------------------------------------------------
-    subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 2);
-    frequency_spectrum_plot(EYEDATA.PS, ...
-        cfg.eye.samplingrate_eyelink); % frequency spectrum plot before high pass filter
-    title('Before high-pass filter');
-    set(gca, 'FontSize', cfg.fig.fsiz);
-    
-    
-    
-    % MAIN PREPROCESSING
-    % -------------------------------------------------------------------------
-    [EYEDATA.PS, EYEDATA.TIME, sampling_factor] = pupil_preprocessing_canonical_v01(EYEDATA.TIME, EYEDATA.PS, valid_recording);
-    
     
     
     
