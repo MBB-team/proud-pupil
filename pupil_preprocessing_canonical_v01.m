@@ -111,7 +111,7 @@ pupil_size = interpolate_blinks_v01(pupil_size, cfg.pupil.blink, samplingrate, c
 
 % downsampling
 % -------------------------------------------------------------------------
-sampling_factor = samplingrate / cfg.pupil.samplingrate;  % by what factor do we need to reduce?
+sampling_factor = round(samplingrate / cfg.pupil.samplingrate);  % by what factor do we need to reduce?
 
 if sampling_factor > 1.1
     
