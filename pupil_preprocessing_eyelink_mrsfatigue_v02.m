@@ -8,7 +8,7 @@ function [] = pupil_preprocessing_eyelink_mrsfatigue_v02(subject, condition, ses
 %
 %   Author: Antonius Wiehler <antonius.wiehler@gmail.com>
 %   Original: 2018-04-12
-%   Modified: 2018-04-12
+%   Modified: 2018-06-04
 
 
 
@@ -190,7 +190,7 @@ if ~isempty(files)  % ig there are any files
     
     
     valid_recording(outside_samples) = 0;
-   
+    
     valid_recording(isnan(eyelinkdata(:, strcmp(eyelinkdata_names, 'PS')))) = 0;
     
     
@@ -216,21 +216,26 @@ if ~isempty(files)  % ig there are any files
     
     % PREPARE DATA
     % -------------------------------------------------------------------------
-     EYEDATA.PS       = eyelinkdata(:, strcmp(eyelinkdata_names, 'PS'));
-        EYEDATA.TIME       = eyelinkdata(:, strcmp(eyelinkdata_names, 'TIME'));
+    EYEDATA.PS   = eyelinkdata(:, strcmp(eyelinkdata_names, 'PS'));
+    EYEDATA.TIME = eyelinkdata(:, strcmp(eyelinkdata_names, 'TIME'));
     
     % MAIN PREPROCESSING
     % -------------------------------------------------------------------------
-    [EYEDATA.PS, EYEDATA.TIME, sampling_factor] = pupil_preprocessing_canonical_v01(EYEDATA.TIME, EYEDATA.PS, valid_recording);
+    do_mad_outlier     = 1;
+    do_bandpass_filter = 1;
+    do_interpolation   = 1;
+    do_resampling      = 1;
+    do_zscore          = 0;
+    [EYEDATA.PS, EYEDATA.TIME, sampling_factor] = pupil_preprocessing_canonical_v02(EYEDATA.TIME, EYEDATA.PS, valid_recording, do_mad_outlier, do_bandpass_filter, do_interpolation, do_resampling, do_zscore);
     
     
-        
+    
     % downsampling
     % -------------------------------------------------------------------------
     
     if sampling_factor > 1
         % downsamples with low pass filtering, used for measures
-                
+        
         EYEDATA.XP       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'XP')), sampling_factor);
         EYEDATA.YP       = decimate(eyelinkdata(:, strcmp(eyelinkdata_names, 'YP')), sampling_factor);
         
