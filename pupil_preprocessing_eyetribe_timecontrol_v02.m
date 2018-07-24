@@ -8,7 +8,7 @@ function [] = pupil_preprocessing_eyetribe_timecontrol_v02(subject)
 %
 %   Author: Antonius Wiehler <antonius.wiehler@gmail.com>
 %   Original: 2018-04-11
-%   Modified: 2018-04-11
+%   Modified: 2018-07-24
 
 
 
@@ -114,7 +114,8 @@ if ~isempty(files)  % ig there are any files
     
     % plot screen fixations
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 1);
-    plot(eyeTrackdata.LEyeAvgX, -eyeTrackdata.LEyeAvgY, '.');  % plot fixations. Careful, Y axis is inverted in data!
+    ndhist(eyeTrackdata.LEyeAvgX, -eyeTrackdata.LEyeAvgY, 'filter', 15);  % plot heat map of fixations. Careful, Y axis is inverted in data!
+    
     title('Screen fixations');
     set(gca, 'FontSize', cfg.fig.fsiz);
     
@@ -183,7 +184,7 @@ if ~isempty(files)  % ig there are any files
     tmp_plot = [];
     title('L pupil before artifact removal'); % plot before high pass filter
     set(gca, 'FontSize', cfg.fig.fsiz);
-       
+    
     
     
     % plot frequency spectrum
@@ -240,7 +241,7 @@ if ~isempty(files)  % ig there are any files
     export_fig([savewhere '.png'], '-r300', '-nocrop');  % save figure
     close(f);  % close figure
     
-   
+    
     
 else
     disp('No files found.');
