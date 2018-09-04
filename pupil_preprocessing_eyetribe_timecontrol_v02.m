@@ -4,7 +4,7 @@ function [] = pupil_preprocessing_eyetribe_timecontrol_v02(subject)
 %   cfg: configuration structure
 %   subject: current subject, ID_INITIALS, e.g. 111_aw
 %   condition: condition to be processed.
-%   session: session n umber to be processed
+%   session: session number to be processed
 %
 %   Author: Antonius Wiehler <antonius.wiehler@gmail.com>
 %   Original: 2018-04-11
@@ -136,15 +136,15 @@ if ~isempty(files)  % ig there are any files
     
     % remove fixations outside screen borders
     % -------------------------------------------------------------------------
-    [~, outside_samples_L] = delete_periphical_fixations_v01(eyeTrackdata.LEyePsize, eyeTrackdata.LEyeAvgX, eyeTrackdata.LEyeAvgY, ...
-        cfg.ptb.ScreenX, cfg.ptb.ScreenY, cfg.eye.border_size, cfg.eye.blink);
-    
-    [~, outside_samples_R] = delete_periphical_fixations_v01(eyeTrackdata.REyePsize, eyeTrackdata.REyeAvgX, eyeTrackdata.REyeAvgY, ...
-        cfg.ptb.ScreenX, cfg.ptb.ScreenY, cfg.eye.border_size, cfg.eye.blink);
-    
-    
-    valid_recording(outside_samples_L) = 0;
-    valid_recording(outside_samples_R) = 0;
+%     [~, outside_samples_L] = delete_periphical_fixations_v01(eyeTrackdata.LEyePsize, eyeTrackdata.LEyeAvgX, eyeTrackdata.LEyeAvgY, ...
+%         cfg.ptb.ScreenX, cfg.ptb.ScreenY, cfg.eye.border_size, cfg.eye.blink);
+%     
+%     [~, outside_samples_R] = delete_periphical_fixations_v01(eyeTrackdata.REyePsize, eyeTrackdata.REyeAvgX, eyeTrackdata.REyeAvgY, ...
+%         cfg.ptb.ScreenX, cfg.ptb.ScreenY, cfg.eye.border_size, cfg.eye.blink);
+%     
+%     
+%     valid_recording(outside_samples_L) = 0;
+%     valid_recording(outside_samples_R) = 0;
     
     
     % interpolate to target sampling rate
@@ -175,7 +175,7 @@ if ~isempty(files)  % ig there are any files
     
     
     
-    % plot time series after artifact removal
+    % plot time series before artifact removal
     % -------------------------------------------------------------------------
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 4 : 6);
     tmp_plot = eyeTrackdata.LEyePsize;
@@ -199,8 +199,8 @@ if ~isempty(files)  % ig there are any files
     
     % MAIN PREPROCESSING
     % -------------------------------------------------------------------------
-    [eyeTrackdata.LEyePsize, eyeTrackdata.time, sampling_factor] = pupil_preprocessing_canonical_v01(eyeTrackdata.time, eyeTrackdata.LEyePsize, valid_recording);
-    [eyeTrackdata.REyePsize, eyeTrackdata.time, sampling_factor] = pupil_preprocessing_canonical_v01(eyeTrackdata.time, eyeTrackdata.REyePsize, valid_recording);
+    [eyeTrackdata.LEyePsize, eyeTrackdata.time, sampling_factor, pSamplesRejected] = pupil_preprocessing_canonical_v03(eyeTrackdata.time, eyeTrackdata.LEyePsize, valid_recording, 1, 1, 1, 1, 1);
+    [eyeTrackdata.REyePsize, eyeTrackdata.time] = pupil_preprocessing_canonical_v03(eyeTrackdata.time, eyeTrackdata.REyePsize, valid_recording, 1, 1, 1, 1, 1);
     
     
     % average eyes
@@ -213,8 +213,8 @@ if ~isempty(files)  % ig there are any files
     % plot after filter and smoothing
     % -------------------------------------------------------------------------
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 7 : 9);
-    plot(eyeTrackdata.PsizeZ);
-    title('Pupil after high-pass filter and smoothing');
+    plot(eyeTrackdata.PsizeZ(1 : (end - 600)));
+    title(sprintf('Pupil after high-pass filter and smoothing - %.2f%% of samples rejected', sum(pSamplesRejected) * 100));
     set(gca, 'FontSize', cfg.fig.fsiz);
     
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 3);
