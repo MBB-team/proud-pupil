@@ -1,4 +1,4 @@
-function [X_eyeCoord, Y_eyeCoord, pupil_diam, z_pupil_diam, nanEpisodes] = preproc_eyeGazePupil(asc, x_screen, y_screen, samplingRate, disp_gr)
+function [eyeTime, X_eyeCoord, Y_eyeCoord, pupil_diam, z_pupil_diam, nanEpisodes] = preproc_eyeGazePupil(asc, x_screen, y_screen, samplingRate, disp_gr)
 %preproc_eyeGazePupil function to make the preprocessing of the eye gaze
 %and pupil data before using analytical scripts to check any correlation
 %with the variables of interest.
@@ -21,6 +21,8 @@ function [X_eyeCoord, Y_eyeCoord, pupil_diam, z_pupil_diam, nanEpisodes] = prepr
 % disp_gr: display graph of the signal at each timestep (1) or not (0)?
 %
 % OUTPUTS
+% eyeTime: time info corresponding to each time point
+%
 % X_eyeCoord: X position of the eye on the screen
 %
 % Y_eyeCoord: Y position of the eye on the screen
@@ -102,8 +104,8 @@ end
 %% exclude eye outside of screen/signal loss
 
 % extract timings when eye outside screen
-eye_outside_screen = (X_eyeCoord >= x_screen) + (X_eyeCoord < 0) +...
-    (Y_eyeCoord >= y_screen) + (Y_eyeCoord < 0);
+eye_outside_screen = (X_eyeCoord >= x_screen) + (X_eyeCoord <= 0) +...
+    (Y_eyeCoord >= y_screen) + (Y_eyeCoord <= 0);
 % delete these timepoints from the data (gaze position and
 % pupil size)
 X_eyeCoord(eye_outside_screen ~= 0) = NaN;
@@ -131,9 +133,10 @@ end
 % problem of how to define blinks... (check how to
 % recover eyeLink blink identification
 blinkWindow = 0.1; % remove [blinkWindow] milliseconds before start of blink/loss-of-signal and [blinkWindow] milliseconds after end of a blink/loss-of-signal episode
-addpath('C:\Users\nicolas.clairis\Documents\GitHub\proud-pupil'); % add path containing interpolation function
-[pupil_diam, nanEpisodes] = interpolate_blinks_v03(pupil_diam, eyeSignalOk, samplingRate, blinkWindow);
-rmpath('C:\Users\nicolas.clairis\Documents\GitHub\proud-pupil'); % remove path containing interpolation function
+pupil_functions_path = fullfile('C:','Users','nicolas.clairis','Documents','GitHub','proud-pupil');
+addpath( pupil_functions_path ); % add path containing interpolation function
+[pupil_diam, nanEpisodes] = interpolate_blinks_nonlinear_v01(pupil_diam, eyeSignalOk, samplingRate, blinkWindow);
+rmpath( pupil_functions_path ); % remove path containing interpolation function
 
 % plot after interpolating
 if disp_gr == 1
@@ -177,11 +180,19 @@ end
 % (based on Antonius Wiehler script)
 if bandpass_filter == 1
     
+    % mirror signal to avoid border artefacts
+    pupil_diam  = [flipud(pupil_diam); pupil_diam];
+    
     % set up parameters for filter
     order       = 1;
     [b, a] = butter(order, [fHighPass, fLowPass] / (samplingRate / 2), 'bandpass');
     % filter the pupil diameter
-    pupil_diam      = filter(b,a,pupil_diam);  % filtered signal
+    pupil_diam      = filter(b, a, pupil_diam);  % filtered signal
+    
+    % unmirror the signal again
+    L_pupil_diam     = length(pupil_diam);
+    half            = ceil(L_pupil_diam./2); %for odd number of bit-stream length
+    pupil_diam      = pupil_diam(half + 1 : end);
     
     % plot after filtering
     if disp_gr == 1
