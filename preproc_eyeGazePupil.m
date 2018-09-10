@@ -1,4 +1,4 @@
-function [X_eyeCoord, Y_eyeCoord, pupil_diam, z_pupil_diam, nanEpisodes] = preproc_eyeGazePupil(asc, x_screen, y_screen, samplingRate, disp_gr)
+function [eyeTime, X_eyeCoord, Y_eyeCoord, pupil_diam, z_pupil_diam, nanEpisodes] = preproc_eyeGazePupil(asc, x_screen, y_screen, samplingRate, disp_gr)
 %preproc_eyeGazePupil function to make the preprocessing of the eye gaze
 %and pupil data before using analytical scripts to check any correlation
 %with the variables of interest.
@@ -21,6 +21,8 @@ function [X_eyeCoord, Y_eyeCoord, pupil_diam, z_pupil_diam, nanEpisodes] = prepr
 % disp_gr: display graph of the signal at each timestep (1) or not (0)?
 %
 % OUTPUTS
+% eyeTime: time info corresponding to each time point
+%
 % X_eyeCoord: X position of the eye on the screen
 %
 % Y_eyeCoord: Y position of the eye on the screen
@@ -102,8 +104,8 @@ end
 %% exclude eye outside of screen/signal loss
 
 % extract timings when eye outside screen
-eye_outside_screen = (X_eyeCoord >= x_screen) + (X_eyeCoord < 0) +...
-    (Y_eyeCoord >= y_screen) + (Y_eyeCoord < 0);
+eye_outside_screen = (X_eyeCoord >= x_screen) + (X_eyeCoord <= 0) +...
+    (Y_eyeCoord >= y_screen) + (Y_eyeCoord <= 0);
 % delete these timepoints from the data (gaze position and
 % pupil size)
 X_eyeCoord(eye_outside_screen ~= 0) = NaN;
