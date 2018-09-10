@@ -4,7 +4,7 @@ function [d, blink_indx] = interpolate_blinks_nonlinear_v01(d, blink, samplingra
 % Interpolate blinks in 1D pupil size measures.
 %
 % d: vector of pupil size measures
-% blink: how is a blink defined in the data, usually 0
+% blink: how is a blink defined in the data, usually 0, this is not an index vector! Typically, everything is interpolated when the signal is 0.
 % samplingrate: samplingrate of the eyetracker
 % blinkWindow: how many seconds should be removed before and after a blink?
 % blink_indx: Where are blinks?
@@ -12,9 +12,9 @@ function [d, blink_indx] = interpolate_blinks_nonlinear_v01(d, blink, samplingra
 %
 % Author: Antonius Wiehler <antonius.wiehler@gmail.com>
 % Original: 2017-01-11
-% Modified: 2018-09-04
+% Modified: 2018-09-10
 
-% mirror signal to avoid border artefacts
+% mirror signal to avoid border artefacts - if the data starts with a blink, the non linear interpolation can go wild.
 d      = [flipud(d); d];
 
 sampleLength   = 1 ./ samplingrate;  % how long is one sample in seconds?
