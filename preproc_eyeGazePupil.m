@@ -133,9 +133,10 @@ end
 % problem of how to define blinks... (check how to
 % recover eyeLink blink identification
 blinkWindow = 0.1; % remove [blinkWindow] milliseconds before start of blink/loss-of-signal and [blinkWindow] milliseconds after end of a blink/loss-of-signal episode
-addpath('C:\Users\nicolas.clairis\Documents\GitHub\proud-pupil'); % add path containing interpolation function
-[pupil_diam, nanEpisodes] = interpolate_blinks_v03(pupil_diam, eyeSignalOk, samplingRate, blinkWindow);
-rmpath('C:\Users\nicolas.clairis\Documents\GitHub\proud-pupil'); % remove path containing interpolation function
+pupil_functions_path = fullfile('C:','Users','nicolas.clairis','Documents','GitHub','proud-pupil');
+addpath( pupil_functions_path ); % add path containing interpolation function
+[pupil_diam, nanEpisodes] = interpolate_blinks_nonlinear_v01(pupil_diam, eyeSignalOk, samplingRate, blinkWindow);
+rmpath( pupil_functions_path ); % remove path containing interpolation function
 
 % plot after interpolating
 if disp_gr == 1
