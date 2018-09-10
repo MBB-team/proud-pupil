@@ -180,11 +180,19 @@ end
 % (based on Antonius Wiehler script)
 if bandpass_filter == 1
     
+    % mirror signal to avoid border artefacts
+    pupil_diam  = [flipud(pupil_diam); pupil_diam];
+    
     % set up parameters for filter
     order       = 1;
     [b, a] = butter(order, [fHighPass, fLowPass] / (samplingRate / 2), 'bandpass');
     % filter the pupil diameter
-    pupil_diam      = filter(b,a,pupil_diam);  % filtered signal
+    pupil_diam      = filter(b, a, pupil_diam);  % filtered signal
+    
+    % unmirror the signal again
+    L_pupil_diam     = length(pupil_diam);
+    half            = ceil(L_pupil_diam./2); %for odd number of bit-stream length
+    pupil_diam      = pupil_diam(half + 1 : end);
     
     % plot after filtering
     if disp_gr == 1
