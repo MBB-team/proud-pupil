@@ -213,7 +213,7 @@ if ~isempty(files)  % ig there are any files
     % plot after filter and smoothing
     % -------------------------------------------------------------------------
     subplot(cfg.fig.ysubplot, cfg.fig.xsubplot, 7 : 9);
-    plot(eyeTrackdata.PsizeZ(1 : (end - 600)));
+    plot(eyeTrackdata.PsizeZ);
     title(sprintf('Pupil after high-pass filter and smoothing - %.2f%% of samples rejected', sum(pSamplesRejected) * 100));
     set(gca, 'FontSize', cfg.fig.fsiz);
     
