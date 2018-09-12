@@ -113,6 +113,9 @@ Y_eyeCoord(eye_outside_screen ~= 0) = NaN;
 pupil_diam(eye_outside_screen ~= 0) = 0;
 eyeSignalOk(eye_outside_screen ~= 0) = 0; % signal that this part should also be interpolated
 
+% use also info in eyeSignalOk
+pupil_diam(eyeSignalOk == 0) = 0;
+
 
 %% exclude samples with more than 3*SD for pupil diameter
 if highSD_exclusion == 1
@@ -135,7 +138,8 @@ end
 blinkWindow = 0.1; % remove [blinkWindow] milliseconds before start of blink/loss-of-signal and [blinkWindow] milliseconds after end of a blink/loss-of-signal episode
 pupil_functions_path = fullfile('C:','Users','nicolas.clairis','Documents','GitHub','proud-pupil');
 addpath( pupil_functions_path ); % add path containing interpolation function
-[pupil_diam, nanEpisodes] = interpolate_blinks_nonlinear_v01(pupil_diam, eyeSignalOk, samplingRate, blinkWindow);
+pupil_diam_when_blink = 0;
+[pupil_diam, nanEpisodes] = interpolate_blinks_nonlinear_v01(pupil_diam', pupil_diam_when_blink, samplingRate, blinkWindow);
 rmpath( pupil_functions_path ); % remove path containing interpolation function
 
 % plot after interpolating
