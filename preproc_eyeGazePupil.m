@@ -185,7 +185,7 @@ end
 if bandpass_filter == 1
     
     % mirror signal to avoid border artefacts
-    pupil_diam  = [flipud(pupil_diam); pupil_diam];
+    pupil_diam  = [flipud(pupil_diam); pupil_diam; flipud(pupil_diam)];
     
     % set up parameters for filter
     order       = 1;
@@ -195,8 +195,8 @@ if bandpass_filter == 1
     
     % unmirror the signal again
     L_pupil_diam     = length(pupil_diam);
-    half            = ceil(L_pupil_diam./2); %for odd number of bit-stream length
-    pupil_diam      = pupil_diam(half + 1 : end);
+    third            = ceil(L_pupil_diam./3); %for odd number of bit-stream length
+    pupil_diam      = pupil_diam( (third + 1):(third*2) );
     
     % plot after filtering
     if disp_gr == 1
