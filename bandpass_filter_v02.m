@@ -9,19 +9,19 @@ function [ d ] = bandpass_filter_v02( d, fs, fcutlow, fcuthigh )
 %
 % Author: Antonius Wiehler <antonius.wiehler@gmail.com>
 % Original: 2017-06-30
-% Modified: 2018-09-04
+% Modified: 2018-09-13
 
 % mirror signal to avoid border artefacts
-d      = [flipud(d); d];  
+d      = [flipud(d); d; flipud(d)];
 
 order  = 1;
 [b, a] = butter(order, [fcutlow, fcuthigh] / (fs / 2), 'bandpass');  % create filter
 d      = filter(b, a, d);  % filtered signal
 
 % unmirror the signal again
-ld     = length(d);
-half   = ceil(ld ./ 2); %for odd number of bit-stream length
-d      = d(half + 1 : end);
+ld         = length(d);
+third      = ceil(ld ./ 3);  % for odd number of bit-stream length
+d          = d(third+1 : third.*2);
 
 end
 

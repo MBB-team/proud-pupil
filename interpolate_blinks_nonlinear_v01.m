@@ -12,9 +12,9 @@ function [d, blink_indx] = interpolate_blinks_nonlinear_v01(d, blink, samplingra
 %
 % Author: Antonius Wiehler <antonius.wiehler@gmail.com>
 % Original: 2017-01-11
-% Modified: 2018-09-11
+% Modified: 2018-09-13
 
-% mirror signal to avoid border artefacts - if the data starts with a blink, the non linear interpolation can go wild.
+% mirror signal to avoid border artefacts - if the data starts or ends with a blink, the non linear interpolation can go wild.
 d      = [flipud(d); d; flipud(d)];
 
 sampleLength   = 1 ./ samplingrate;  % how long is one sample in seconds?
