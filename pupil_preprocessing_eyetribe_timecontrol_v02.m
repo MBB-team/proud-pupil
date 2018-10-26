@@ -46,7 +46,6 @@ cfg.dir.spm                  = '~/matlab_toolboxes/spm12/';  % whre is the SPM i
 cfg.dir.export_fig           = 'export_fig/';
 
 addpath(genpath(cfg.dir.export_fig));  % add export_fig for saving plots
-addpath(genpath(cfg.dir.spm));  % add spm for spm_filter function
 
 
 % figure

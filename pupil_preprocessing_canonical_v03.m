@@ -8,14 +8,12 @@ function [pupil_size, timestamps, sampling_factor, pSamplesRejected] = pupil_pre
 %  1) Calculate the recorded sampling rate
 %  2) 'do_mad_outlier':     Remove outliers outside 3 MAD
 %  3) 'do_bandpass_filter': Bandpass filter
-%  4) 'do_interpolation':   Linearly interpolate bad states
+%  4) 'do_interpolation':   Interpolate bad states
 %  5) 'do_resampling':      Resampling to 60Hz if needed
 %  6) 'do_zscore':          Z-score
 %
 %  If you have recordings form both eyes, please preprocess each eye
 %  separately, and average them afterwards.
-%
-%  Please add SPM12 to your path before running this script.
 %
 %   Inputs
 %   timestamps:      Vector of time stamps, in ms resolution, size: nx1
@@ -34,7 +32,7 @@ function [pupil_size, timestamps, sampling_factor, pSamplesRejected] = pupil_pre
 %
 %   Author: Antonius Wiehler <antonius.wiehler@gmail.com>
 %   Original: 2018-03-16
-%   Modified: 2018-09-04
+%   Modified: 2018-10-25
 
 
 
@@ -61,10 +59,6 @@ valid_recording = valid_recording(:);
 
 if ~all(size(pupil_size) == size(timestamps) & size(pupil_size) == size(valid_recording))
     error('Inputs do not have the same length.');
-end
-
-if ~contains(path, 'spm')
-    error('Please add SPM12 to your path before running this script.');
 end
 
 
