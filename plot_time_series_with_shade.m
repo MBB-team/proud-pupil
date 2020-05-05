@@ -10,7 +10,7 @@ function plot_time_series_with_shade(Dmean, Derror, color, samplingrate, zero_of
 %
 % Author:        Antonius Wiehler <antonius.wiehler@gmail.com>
 % Original:      2017-05-12
-% Last modified: 2017-05-12
+% Last modified: 2020-05-05
 
 if ~exist('zero_offset', 'var')
     zero_offset = 0;  % set pre stimulus interval to 0 if not defined
@@ -26,8 +26,8 @@ ce = Derror;
 
 % remove nan collumns
 nancol = isnan(ct) | isnan(ce);
-if sum(nancol) > 50
-    warning('More than 50 NaN samples removed during plotting of timeseries.');
+if sum(nancol) > samplingrate
+    warning('More than 1s of NaN samples removed during plotting of timeseries.');
 end
 
 ct(nancol) = [];
@@ -41,9 +41,9 @@ plot(x, ct, 'linestyle', '-', 'LineWidth', 1, 'color', color);
 % set x-axis ticks
 start_x_tick   = rem(zero_offset, samplingrate);
 end_x_tick     = size(ct, 2);
-xtickposition1 = [start_x_tick : samplingrate : zero_offset];
+xtickposition1 = [start_x_tick : samplingrate/2 : zero_offset];
 xtickposition1 = xtickposition1(1 : end - 1);  % to avoid duplicate with xtickposition2
-xtickposition2 = [zero_offset : samplingrate : end_x_tick];
+xtickposition2 = [zero_offset : samplingrate/2 : end_x_tick];
 xtickposition  = [xtickposition1 xtickposition2];
 set(gca, 'XTick', xtickposition);
 
