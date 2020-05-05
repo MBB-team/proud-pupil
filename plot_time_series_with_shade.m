@@ -1,4 +1,4 @@
-function plot_time_series_with_shade(Dmean, Derror, color, samplingrate, zero_offset)
+function phandle = plot_time_series_with_shade(Dmean, Derror, color, samplingrate, zero_offset)
 % USAGE function plot_time_series_with_shade(Dmean, Derror, color, samplingrate, zero_offset)
 %
 % ARGS
@@ -36,7 +36,7 @@ ce(nancol) = [];
 x = 1 : length(ct);  % helper for plotting
 
 patch([x x(end:-1:1)], [ct+ce ct(end:-1:1)-ce(end:-1:1)], color, 'facealpha', 0.2, 'Edgecolor', 'none'); hold on;
-plot(x, ct, 'linestyle', '-', 'LineWidth', 1, 'color', color);
+phandle = plot(x, ct, 'linestyle', '-', 'LineWidth', 1, 'color', color);
 
 % set x-axis ticks
 start_x_tick   = rem(zero_offset, samplingrate);
