@@ -1,5 +1,5 @@
 function phandle = plot_time_series_with_shade(Dmean, Derror, color, samplingrate, zero_offset)
-% USAGE function plot_time_series_with_shade(Dmean, Derror, color, samplingrate, zero_offset)
+% USAGE function phandle = plot_time_series_with_shade(Dmean, Derror, color, samplingrate, zero_offset)
 %
 % ARGS
 % Dmean          mean of time series (1D)
@@ -10,7 +10,7 @@ function phandle = plot_time_series_with_shade(Dmean, Derror, color, samplingrat
 %
 % Author:        Antonius Wiehler <antonius.wiehler@gmail.com>
 % Original:      2017-05-12
-% Last modified: 2020-05-05
+% Last modified: 2020-05-29
 
 if ~exist('zero_offset', 'var')
     zero_offset = 0;  % set pre stimulus interval to 0 if not defined
@@ -40,18 +40,34 @@ phandle = plot(x, ct, 'linestyle', '-', 'LineWidth', 1, 'color', color);
 
 % set x-axis ticks
 start_x_tick   = rem(zero_offset, samplingrate);
-end_x_tick     = size(ct, 2);
-xtickposition1 = [start_x_tick : samplingrate/2 : zero_offset];
-xtickposition1 = xtickposition1(1 : end - 1);  % to avoid duplicate with xtickposition2
-xtickposition2 = [zero_offset : samplingrate/2 : end_x_tick];
+end_x_tick     = get(gca, 'XLim');
+end_x_tick     = end_x_tick(2);
+
+
+% closest multiple of sampling rate at the right
+end_x_tick = end_x_tick - mod(end_x_tick, samplingrate);
+
+
+% hack the number of ticks depending on their number
+if end_x_tick > 5 * samplingrate
+    spacing = samplingrate;
+else
+    spacing = samplingrate ./ 2;
+end
+
+
+xtickposition1 = [start_x_tick : spacing : zero_offset];
+xtickposition1 = xtickposition1(1 : end - 1);  % delete last one to avoid duplicate with xtickposition2
+xtickposition2 = [zero_offset : spacing : end_x_tick];
 xtickposition  = [xtickposition1 xtickposition2];
 set(gca, 'XTick', xtickposition);
+
 
 % set x axis tick labels
 xticklabels = (xtickposition - zero_offset) ./ samplingrate;
 set(gca, 'XTickLabel', xticklabels);
 
 % set axis label
-xlabel('Time (s)');
+xlabel('time (s)');
 
 end

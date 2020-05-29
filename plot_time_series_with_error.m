@@ -1,5 +1,5 @@
-function plot_time_series_with_error(D, color, samplingrate, zero_offset)
-% USAGE function plot_time_series_with_error(D, color, samplingrate, zero_offset)
+function phandle = plot_time_series_with_error(D, color, samplingrate, zero_offset)
+% USAGE function phandle = plot_time_series_with_error(D, color, samplingrate, zero_offset)
 %
 % ARGS
 % D              Data matrix. Observations in rows, time in collumns
@@ -9,7 +9,7 @@ function plot_time_series_with_error(D, color, samplingrate, zero_offset)
 %
 % Author:        Antonius Wiehler <antonius.wiehler@gmail.com>
 % Original:      2017-03-01
-% Last modified: 2017-05-11
+% Last modified: 2020-05-29
 
 if ~exist('zero_offset', 'var')
     zero_offset = 0;  % set pre stimulus interval to 0 if not defined
@@ -36,14 +36,29 @@ ce(nancol) = [];
 x = 1 : length(ct);  % helper for plotting
 
 patch([x x(end:-1:1)], [ct+ce ct(end:-1:1)-ce(end:-1:1)], color, 'facealpha', 0.2, 'Edgecolor', 'none'); hold on;
-plot(x, ct, 'linestyle', '-', 'LineWidth', 1, 'color', color);
+phandle = plot(x, ct, 'linestyle', '-', 'LineWidth', 1, 'color', color);
 
 % set x-axis ticks
 start_x_tick   = rem(zero_offset, samplingrate);
-end_x_tick     = size(ct, 2);
-xtickposition1 = [start_x_tick : samplingrate/2 : zero_offset];
-xtickposition1 = xtickposition1(1 : end - 1);  % to avoid duplicate with xtickposition2
-xtickposition2 = [zero_offset : samplingrate/2 : end_x_tick];
+end_x_tick     = get(gca, 'XLim');
+end_x_tick     = end_x_tick(2);
+
+
+% closest multiple of sampling rate at the right
+end_x_tick = end_x_tick - mod(end_x_tick, samplingrate);
+
+
+% hack the number of ticks depending on their number
+if end_x_tick > 5 * samplingrate
+    spacing = samplingrate;
+else
+    spacing = samplingrate ./ 2;
+end
+
+
+xtickposition1 = [start_x_tick : spacing : zero_offset];
+xtickposition1 = xtickposition1(1 : end - 1);  % delete last one to avoid duplicate with xtickposition2
+xtickposition2 = [zero_offset : spacing : end_x_tick];
 xtickposition  = [xtickposition1 xtickposition2];
 set(gca, 'XTick', xtickposition);
 
@@ -52,6 +67,6 @@ xticklabels = (xtickposition - zero_offset) ./ samplingrate;
 set(gca, 'XTickLabel', xticklabels);
 
 % set axis label
-xlabel('Time (s)');
+xlabel('time (s)');
 
 end
