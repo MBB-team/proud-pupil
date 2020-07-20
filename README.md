@@ -3,7 +3,7 @@ A collection of helpful functions for the analysis of pupil dilation.
 
 You can add this as a submodule to your git repository. In your project, use `git submodule add https://github.com/MBB-team/proud-pupil.git` to add,  `git submodule init` to initialize your local configuration file, and `git submodule update` to fetch updates.
 
-##A typical preprocessing includes the following steps:
+## A typical preprocessing includes the following steps:
 
 - Remove non-good states of eye-tracker (blinks etc.)
 - Removed fixations outside screen center
