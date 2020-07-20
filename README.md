@@ -1,4 +1,4 @@
-# proud-pupil
+# Pupil dilation
 A collection of helpful functions for the analysis of pupil dilation.
 
 You can add this as a submodule to your git repository. In your project, use `git submodule add https://github.com/MBB-team/proud-pupil.git` to add,  `git submodule init` to initialize your local configuration file, and `git submodule update` to fetch updates.
@@ -15,3 +15,6 @@ You can add this as a submodule to your git repository. In your project, use `gi
 - Smoothing (for 1D-RFT, ONLY IF NO LOW-PASS OR BANDPASS FILTER)
 - Z-score across the whole session
 - Baseline correction in epochs (substract mean of 100ms before onset from epoch)
+
+
+Antonius Wiehler <antonius.wiehler@gmail.com>
